@@ -1,0 +1,39 @@
+name: GroupManager
+version: 0.6
+main: org.anjocaido.groupmanager.GroupManager
+website: http://www.anjocaido.info/
+description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
+authors:
+  - AnjoCaido
+  - Gabriel Couto
+commands:
+  mangroup:
+    description: Change player group to one desired. (works for overloaded users too)
+    usage: /<command> <player> <group>
+  addpermission:
+    description: Adds a permission to a user. (works for overloaded users too)
+    usage: /<command> <player> <permissionNode>
+  manwhois:
+     description: Tell which group that user belongs, and it it's overload status.
+     usage: /<command> <player>
+  overload:
+    description: Creates a temporary permission copy for that user. Any changes on him after this won't be saved.
+    usage: /<command> <player>
+  underload:
+    description: Remove the temporary permission copy for player(it can remove overload made by other plugins).
+    usage: /<command> <player>
+  listoverload:
+    description: List players in overload-permissions mode made by /overload.
+    usage: /<command>
+  underloadall:
+    description: Remove all overrides made by command /overload (doesn't touch overloads created by other plugins)
+    usage: /<command>
+  mancommit:
+    description: Save all permissions on file. (doesnt include overload permissions)
+    usage: /<command>
+  manreload:
+    description: Reload permissions from file. (users already overloaded keep overloaded)
+    usage: /<command>
+  listgroups:
+    description: List the groups available.
+    usage: /<command>
