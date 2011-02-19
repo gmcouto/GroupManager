@@ -322,7 +322,7 @@ public class DataHolder {
                 } else if (inheritNode instanceof List) {
                     List<String> groupsInh = (List<String>) inheritNode;
                     for (String grp : groupsInh) {
-                        System.out.println("Found inheritance "+grp+" for group"+groupKey);
+                        //System.out.println("Found inheritance "+grp+" for group"+groupKey);
                         inheritance.put(groupKey, grp);
                     }
                 }
@@ -334,7 +334,7 @@ public class DataHolder {
         }
         for (String groupKey : inheritance.keySet()) {
             String inherited = inheritance.get(groupKey);
-            System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
+            //System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
             if (ph.groups.containsKey(groupKey) && ph.groups.containsKey(inherited)) {
                 Group grp = ph.groups.get(groupKey);
                 Group inh = ph.groups.get(inherited);

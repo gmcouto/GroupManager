@@ -392,7 +392,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         //System.out.println("Testing permission inh group "+start.getName());
         for (String availablePerm : start.permissions) {
             if (comparePermissionString(availablePerm, permission)) {
-                System.out.println("WIN!");
+                //System.out.println("WIN!");
                 return true;
             }
         }

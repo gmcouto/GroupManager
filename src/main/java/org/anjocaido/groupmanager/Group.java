@@ -127,7 +127,7 @@ public class Group implements Cloneable{
      * @param inherits the inherits to set
      */
     public void addInherits(Group inherit) {
-        System.out.println("Adding inheritance:" + inherit.getName()+ "for "+ this.getName());
+        //System.out.println("Adding inheritance:" + inherit.getName()+ "for "+ this.getName());
         if(!source.groups.containsKey(inherit)){
             getDataSource().addGroup(inherit);
         }
