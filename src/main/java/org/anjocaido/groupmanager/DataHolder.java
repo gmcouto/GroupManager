@@ -81,13 +81,13 @@ public class DataHolder {
      * @param theUser the user you want to add to the permission list
      */
     public void addUser(User theUser) {
-        if(theUser.getDataSource() != this){
+        if (theUser.getDataSource() != this) {
             theUser = theUser.clone(this);
         }
-        if(theUser==null){
+        if (theUser == null) {
             return;
         }
-        if((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroup()))){
+        if ((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroup()))) {
             theUser.setGroup(defaultGroup);
         }
         removeUser(theUser.getName());
@@ -112,7 +112,7 @@ public class DataHolder {
      * @param group the group you want make default.
      */
     public void setDefaultGroup(Group group) {
-        if(!groups.containsKey(group.getName()) || (group.getDataSource()!=this)){
+        if (!groups.containsKey(group.getName()) || (group.getDataSource() != this)) {
             addGroup(group);
         }
         defaultGroup = this.getGroup(group.getName());
@@ -132,13 +132,14 @@ public class DataHolder {
      * @return a group if it is found. null if not found.
      */
     public Group getGroup(String groupName) {
-        for(String key: groups.keySet()){
-            if(groupName.equalsIgnoreCase(key)){
+        for (String key : groups.keySet()) {
+            if (groupName.equalsIgnoreCase(key)) {
                 return groups.get(key);
             }
         }
         return null;
     }
+
     /**
      *  Check if a group exists.
      * Its the same of getGroup, but check if it is null.
@@ -146,8 +147,8 @@ public class DataHolder {
      * @return true if exists. false if not.
      */
     public boolean groupExists(String groupName) {
-        for(String key: groups.keySet()){
-            if(groupName.equalsIgnoreCase(key)){
+        for (String key : groups.keySet()) {
+            if (groupName.equalsIgnoreCase(key)) {
                 return true;
             }
         }
@@ -159,7 +160,7 @@ public class DataHolder {
      * @param groupToAdd
      */
     public void addGroup(Group groupToAdd) {
-        if(groupToAdd.getDataSource()!=this){
+        if (groupToAdd.getDataSource() != this) {
             groupToAdd = groupToAdd.clone(this);
         }
         removeGroup(groupToAdd.getName());
@@ -175,10 +176,10 @@ public class DataHolder {
         if (groupName.equals(defaultGroup)) {
             return false;
         }
-        for(String key: groups.keySet()){
-            if(groupName.equalsIgnoreCase(key)){
-                 groups.remove(key);
-                 return true;
+        for (String key : groups.keySet()) {
+            if (groupName.equalsIgnoreCase(key)) {
+                groups.remove(key);
+                return true;
             }
         }
         return false;
@@ -191,30 +192,30 @@ public class DataHolder {
      * @param userName the username you want
      * @return null if user already exists. or new User
      */
-    public User createUser(String userName){
-        if(this.groups.containsKey(userName.toLowerCase())){
-                return null;
+    public User createUser(String userName) {
+        if (this.groups.containsKey(userName.toLowerCase())) {
+            return null;
         }
-        User newUser = new User(this,userName);
+        User newUser = new User(this, userName);
         newUser.setGroup(defaultGroup);
         this.addUser(newUser);
         return newUser;
     }
+
     /**
      * Creates a new Group with the given name
      * and adds it to this holder
      * @param groupName the groupname you want
      * @return null if group already exists. or new Group
      */
-    public Group createGroup(String groupName){
-        if(this.groups.containsKey(groupName)){
+    public Group createGroup(String groupName) {
+        if (this.groups.containsKey(groupName)) {
             return null;
         }
-        Group newGroup = new Group(this,groupName);
+        Group newGroup = new Group(this, groupName);
         this.addGroup(newGroup);
         return newGroup;
     }
-
 
     /**
      *
@@ -235,7 +236,7 @@ public class DataHolder {
     /**
      *  reads the file again
      */
-    public void reload(){
+    public void reload() {
         try {
             DataHolder ph = load(f);
             this.defaultGroup = ph.defaultGroup;
@@ -245,13 +246,14 @@ public class DataHolder {
             Logger.getLogger(DataHolder.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
     /**
      *  save to the file
      */
-    public void commit(){
+    public void commit() {
         write(this, f);
     }
-    
+
     /**
      *  Returns a data holder for the given file
      * @param file
@@ -282,7 +284,7 @@ public class DataHolder {
             Map<String, Object> groupsNode = (Map<String, Object>) data1.get("groups");
             for (String groupKey : groupsNode.keySet()) {
                 Map<String, Object> group = (Map<String, Object>) groupsNode.get(groupKey);
-                Group thisGrp = new Group(ph,groupKey);
+                Group thisGrp = new Group(ph, groupKey);
                 if (group.get("default") == null) {
                     group.put("default", false);
                 }
@@ -290,12 +292,21 @@ public class DataHolder {
                     ph.defaultGroup = thisGrp;
                 }
 
+                //PERMISSIONS NODE
                 if (group.get("permissions") == null) {
-                    group.put("permissions", new String[0]);
+                    group.put("permissions", new ArrayList<String>());
                 }
-                for (Object o : ((List) group.get("permissions"))) {
-                    thisGrp.permissions.add(o.toString());
+                if (group.get("permissions") instanceof List) {
+                    for (Object o : ((List) group.get("permissions"))) {
+                        thisGrp.permissions.add(o.toString());
+                    }
+                } else if (group.get("permissions") instanceof String) {
+                    thisGrp.permissions.add((String) group.get("permissions"));
+                } else {
+                    throw new Exception("Unknown type of permissions node: " + group.get("permissions").getClass().getName());
                 }
+
+                //INFO NODE
                 Map<String, Object> infoNode = (Map<String, Object>) group.get("info");
                 if (infoNode == null) {
                     infoNode = new HashMap<String, Object>();
@@ -345,7 +356,7 @@ public class DataHolder {
         Map<String, Object> usersNode = (Map<String, Object>) data1.get("users");
         for (String usersKey : usersNode.keySet()) {
             Map<String, Object> node = (Map<String, Object>) usersNode.get(usersKey);
-            User thisUser = new User(ph,usersKey);
+            User thisUser = new User(ph, usersKey);
             if (node.get("permissions") == null) {
                 node.put("permissions", new ArrayList<String>());
             }
@@ -391,7 +402,7 @@ public class DataHolder {
             Map<String, Object> infoMap = new HashMap<String, Object>();
             aGroupMap.put("info", infoMap);
 
-            for(String infoKey: group.variables.getVarKeyList()){
+            for (String infoKey : group.variables.getVarKeyList()) {
                 infoMap.put(infoKey, group.variables.getVarObject(infoKey));
             }
 
@@ -439,6 +450,7 @@ public class DataHolder {
             }
         }
     }
+
     /**
      * Don't use this. Unless you want to make this plugin to interact with original Nijikokun Permissions
      * This method is supposed to make the original one reload the file, and propagate the changes made here.
