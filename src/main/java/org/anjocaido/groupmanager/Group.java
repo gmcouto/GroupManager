@@ -75,16 +75,6 @@ public class Group implements Cloneable{
         return false;
     }
 
-
-    /**
-     *  Get a list with all groups names in inherits field.
-     * Not recursive.
-     * @return the names of groups in inherits field
-     */
-    public ArrayList<String> getInheritanceKeyNameList() {
-        return (ArrayList<String>) inherits.clone();
-    }
-
     /**
      *
      * @return
@@ -124,6 +114,9 @@ public class Group implements Cloneable{
     }
 
     /**
+     * a COPY of inherits list
+     * You can't manage the list by here
+     * Lol... version 0.6 had a problem because this.
      * @return the inherits
      */
     public ArrayList<String> getInherits() {
@@ -134,6 +127,7 @@ public class Group implements Cloneable{
      * @param inherits the inherits to set
      */
     public void addInherits(Group inherit) {
+        System.out.println("Adding inheritance:" + inherit.getName()+ "for "+ this.getName());
         if(!source.groups.containsKey(inherit)){
             getDataSource().addGroup(inherit);
         }

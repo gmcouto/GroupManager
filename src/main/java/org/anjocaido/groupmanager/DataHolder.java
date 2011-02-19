@@ -322,6 +322,7 @@ public class DataHolder {
                 } else if (inheritNode instanceof List) {
                     List<String> groupsInh = (List<String>) inheritNode;
                     for (String grp : groupsInh) {
+                        System.out.println("Found inheritance "+grp+" for group"+groupKey);
                         inheritance.put(groupKey, grp);
                     }
                 }
@@ -333,10 +334,11 @@ public class DataHolder {
         }
         for (String groupKey : inheritance.keySet()) {
             String inherited = inheritance.get(groupKey);
+            System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
             if (ph.groups.containsKey(groupKey) && ph.groups.containsKey(inherited)) {
                 Group grp = ph.groups.get(groupKey);
                 Group inh = ph.groups.get(inherited);
-                grp.getInherits().add(inh.getName());
+                grp.addInherits(inh);
             }
         }
         // Process users to check for invalid value and determine group
@@ -399,7 +401,7 @@ public class DataHolder {
 
             //infoMap.put("build", group.canbuild);
 
-            aGroupMap.put("inheritance", group.getInheritanceKeyNameList());
+            aGroupMap.put("inheritance", group.getInherits());
 
             aGroupMap.put("permissions", group.permissions);
         }

@@ -68,7 +68,9 @@ public class AnjoPermissionsHandler extends PermissionHandler {
             return true;
         }
         for (String availablePerm : user.permissions) {
-            comparePermissionString(availablePerm, permission);
+            if(comparePermissionString(availablePerm, permission)){
+                return true;
+            }
         }
         return false;
     }
@@ -387,11 +389,14 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         if (alreadyChecked.contains(start)) {
             return false;
         }
+        //System.out.println("Testing permission inh group "+start.getName());
         for (String availablePerm : start.permissions) {
             if (comparePermissionString(availablePerm, permission)) {
+                System.out.println("WIN!");
                 return true;
             }
         }
+        //System.out.println("FAIL!");
         alreadyChecked.add(start);
         for (String inherited : start.getInherits()) {
             Group groupInh = ph.getGroup(inherited);
@@ -399,6 +404,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
                 return true;
             }
         }
+        //System.out.println("No more to check!");
         return false;
     }
 
