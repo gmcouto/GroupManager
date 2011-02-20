@@ -1,5 +1,5 @@
 name: GroupManager
-version: 0.6
+version: 0.7
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -8,32 +8,38 @@ authors:
   - Gabriel Couto
 commands:
   mangroup:
-    description: Change player group to one desired. (works for overloaded users too)
+    description: Change player group to one desired.
     usage: /<command> <player> <group>
   addpermission:
-    description: Adds a permission to a user. (works for overloaded users too)
+    description: Adds a permission to a user.
     usage: /<command> <player> <permissionNode>
   manwhois:
-     description: Tell which group that user belongs, and it it's overload status.
+     description: Tell the group that user belongs.
      usage: /<command> <player>
   overload:
-    description: Creates a temporary permission copy for that user. Any changes on him after this won't be saved.
+    description: Creates a temporary permission copy for that user.
     usage: /<command> <player>
   underload:
-    description: Remove the temporary permission copy for player(it can remove overload made by other plugins).
+    description: Remove the temporary permission copy for player.
     usage: /<command> <player>
   listoverload:
     description: List players in overload-permissions mode made by /overload.
     usage: /<command>
   underloadall:
-    description: Remove all overrides made by command /overload (doesn't touch overloads created by other plugins)
+    description: Remove all overrides made by command /overload.
     usage: /<command>
   mancommit:
-    description: Save all permissions on file. (doesnt include overload permissions)
+    description: Save all permissions on file.
     usage: /<command>
   manreload:
-    description: Reload permissions from file. (users already overloaded keep overloaded)
+    description: Reload permissions from file.
     usage: /<command>
   listgroups:
     description: List the groups available.
     usage: /<command>
+  manpromote:
+    description: Promote a player in the same heritage line to a higher rank.
+    usage: /<command> <player> <group>
+  mandemote:
+    description: Demote a player in the same heritage line to a higher rank.
+    usage: /<command> <player> <group>

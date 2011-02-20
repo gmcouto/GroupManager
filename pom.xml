@@ -5,7 +5,7 @@
     <groupId>org.anjocaido</groupId>
     <artifactId>GroupManager</artifactId>
     <packaging>jar</packaging>
-    <version>0.6-SNAPSHOT</version>
+    <version>0.7-SNAPSHOT</version>
     <name>GroupManager</name>
     <url>http://maven.apache.org</url>
     <build>
@@ -49,13 +49,14 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>json-simple</artifactId>
-                    <groupId>com.googlecode.json-simple</groupId>
-                </exclusion>
-            </exclusions>
+            <version>0.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../bukkit-0.0.1-SNAPSHOT.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.7</version>
         </dependency>
     </dependencies>
     <properties>

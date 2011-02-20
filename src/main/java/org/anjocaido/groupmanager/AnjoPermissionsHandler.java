@@ -34,7 +34,8 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     }
 
     /**
-     *
+     * Does nothing. It's not used by GroupManager.
+     * But still here to fool Permissions dependent plugins.
      */
     @Override
     public void load() {
@@ -60,9 +61,14 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      */
     @Override
     public boolean permission(Player player, String permission) {
-        Group hisGroup;
-        User user = ph.getUser(player.getName());
-        hisGroup = user.getGroup();
+        return permission(ph.getUser(player.getName()), permission);
+    }
+
+    public boolean permission(User user, String permission){
+        if(user==null || permission==null){
+            return false;
+        }
+        Group hisGroup = user.getGroup();
         //System.out.println("Verifying permission for "+player.getName()+"(group "+ hisGroup.getName() +") with "+permission);
         if (checkPermissionWithInheritance(hisGroup, permission, null)) {
             return true;
@@ -333,11 +339,11 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     }
 
     /**
-     *
+     * Verifies if a given group has a variable. Including it's inheritance.
      * @param start
      * @param variable
      * @param alreadyChecked
-     * @return
+     * @return returns the closest inherited group with the variable.
      */
     public Group checkVariableWithInheritance(Group start, String variable, List<Group> alreadyChecked) {
         if (alreadyChecked == null) {
@@ -362,7 +368,14 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         return null;
     }
 
-    private boolean checkGroupWithInheritance(Group start, String askedGroup, List<Group> alreadyChecked) {
+    /**
+     * Check if given group inherits another group.
+     * @param start The group to start the search.
+     * @param askedGroup Name of the group you're looking for
+     * @param alreadyChecked groups to ignore(pass null on it, please)
+     * @return true if it inherits the group.
+     */
+    public boolean checkGroupWithInheritance(Group start, String askedGroup, List<Group> alreadyChecked) {
         if (alreadyChecked == null) {
             alreadyChecked = new ArrayList<Group>();
         }
@@ -382,7 +395,14 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         return false;
     }
 
-    private boolean checkPermissionWithInheritance(Group start, String permission, List<Group> alreadyChecked) {
+    /**
+     * Check if the group has given permission. Including it's inheritance
+     * @param start
+     * @param permission
+     * @param alreadyChecked
+     * @return
+     */
+    public boolean checkPermissionWithInheritance(Group start, String permission, List<Group> alreadyChecked) {
         if (alreadyChecked == null) {
             alreadyChecked = new ArrayList<Group>();
         }
@@ -408,7 +428,13 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         return false;
     }
 
-    private boolean comparePermissionString(String userAcessLevel, String fullPermissionName) {
+    /**
+     *
+     * @param userAcessLevel
+     * @param fullPermissionName
+     * @return
+     */
+    public boolean comparePermissionString(String userAcessLevel, String fullPermissionName) {
         //System.out.println("Comparing acess "+userAcessLevel+" with "+fullPermissionName);
         StringTokenizer levelATokenizer = new StringTokenizer(userAcessLevel, ".");
         StringTokenizer levelBTokenizer = new StringTokenizer(fullPermissionName, ".");

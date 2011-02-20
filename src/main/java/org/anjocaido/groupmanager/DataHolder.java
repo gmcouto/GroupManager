@@ -303,7 +303,7 @@ public class DataHolder {
                 } else if (group.get("permissions") instanceof String) {
                     thisGrp.permissions.add((String) group.get("permissions"));
                 } else {
-                    throw new Exception("Unknown type of permissions node: " + group.get("permissions").getClass().getName());
+                    throw new Exception("Unknown type of permissions node(Should be String or List<String>): " + group.get("permissions").getClass().getName());
                 }
 
                 //INFO NODE

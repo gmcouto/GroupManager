@@ -45,5 +45,7 @@ public enum GroupManagerPermissions {
      *
      */
     manreload,
-    listgroups
+    listgroups,
+    manpromote,
+    mandemote
 }

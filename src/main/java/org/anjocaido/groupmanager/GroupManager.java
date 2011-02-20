@@ -66,7 +66,7 @@ public class GroupManager extends JavaPlugin {
         }
         //
         config = new Configuration(configFile);
-        if(!configFile.exists()){
+        if (!configFile.exists()) {
             config.setProperty("settings.data.save.minutes", 10);
             config.save();
         }
@@ -169,6 +169,7 @@ public class GroupManager extends JavaPlugin {
         }
         out.close();
     }
+
     private void copy(File src, File dst) throws IOException {
         InputStream in = new FileInputStream(src);
         copy(in, dst);
@@ -187,7 +188,6 @@ public class GroupManager extends JavaPlugin {
         }
     }
 
-
     /**
      * The new permission handler in the old model... it extends the old, by Nijikokun
      * It is compatible with the plugins made for Permissions
@@ -205,6 +205,7 @@ public class GroupManager extends JavaPlugin {
     public DataHolder getData() {
         return dataHolder;
     }
+
     /**
      *  Use this if you want to play with overloading.
      * @return  a dataholder with overloading interface
@@ -222,14 +223,17 @@ public class GroupManager extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         boolean playerCanDo = false;
         boolean isConsole = false;
+        Player p = null;
         Group playerGroup = null;
+        User playerUser = null;
         if (sender instanceof Player) {
-            Player p = (Player) sender;
-            playerGroup = dataHolder.getUser(p.getName()).getGroup();
+            p = (Player) sender;
+            playerUser = dataHolder.getUser(p.getName());
+            playerGroup = playerUser.getGroup();
             if (p.isOp() || permissionHandler.has(p, "groupmanager." + cmd.getName())) {
                 playerCanDo = true;
             }
-        } else if(sender instanceof ConsoleCommandSender){
+        } else if (sender instanceof ConsoleCommandSender) {
             isConsole = true;
         }
 
@@ -284,6 +288,10 @@ public class GroupManager extends JavaPlugin {
                     //VALIDANDO PERMISSAO
                     if (!isConsole && (match.get(0).isOp() || playerGroup != null ? permissionHandler.inGroup(victim.getName(), playerGroup.getName()) : false)) {
                         sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
+                        return false;
+                    }
+                    if (!isConsole && (!permissionHandler.has(p, args[1]))) {
+                        sender.sendMessage(ChatColor.RED + "Can't add a permission you don't have.");
                         return false;
                     }
                     //PARECE OK
@@ -402,13 +410,93 @@ public class GroupManager extends JavaPlugin {
                     return true;
                 case listgroups:
                     aux = "";
-                    for(Group g: dataHolder.getGroupList()){
+                    for (Group g : dataHolder.getGroupList()) {
                         aux += g.getName() + ", ";
                     }
-                    if(aux.lastIndexOf(",")>0){
+                    if (aux.lastIndexOf(",") > 0) {
                         aux = aux.substring(0, aux.lastIndexOf(","));
                     }
-                    sender.sendMessage(ChatColor.YELLOW + " Groups Available: "+ChatColor.WHITE +aux);
+                    sender.sendMessage(ChatColor.YELLOW + " Groups Available: " + ChatColor.WHITE + aux);
+                    return true;
+                case manpromote:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    match = this.getServer().matchPlayer(args[0]);
+                    if (match.size() != 1) {
+                        sender.sendMessage(ChatColor.RED + "Player not found!");
+                        return false;
+                    }
+                    victim = dataHolder.getUser(match.get(0).getName());
+                    destGroup = dataHolder.getGroup(args[1]);
+                    if (destGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group not found!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!isConsole && (match.get(0).isOp() || playerGroup != null ? permissionHandler.inGroup(victim.getName(), playerGroup.getName()) : false)) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
+                        return false;
+                    }
+                    if (!isConsole && (permissionHandler.checkGroupWithInheritance(destGroup, playerGroup.getName(),null))) {
+                        sender.sendMessage(ChatColor.RED + "The destination group can't be the same as yours, or higher.");
+                        return false;
+                    }
+                    if (!isConsole && (!permissionHandler.inGroup(playerUser.getName(), victim.getGroupName()) || !permissionHandler.inGroup(playerUser.getName(), destGroup.getName()))) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group of different heritage line.");
+                        return false;
+                    }
+                    if (!isConsole && (!permissionHandler.checkGroupWithInheritance(destGroup, victim.getGroupName(), null))) {
+                        sender.sendMessage(ChatColor.RED + "The new group must inherit the old group. The new group must be a higher rank.");
+                        return false;
+                    }
+                    
+                    //PARECE OK
+                    victim.setGroup(destGroup);
+                    sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+                    return true;
+                //break;
+                case mandemote:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    match = this.getServer().matchPlayer(args[0]);
+                    if (match.size() != 1) {
+                        sender.sendMessage(ChatColor.RED + "Player not found!");
+                        return false;
+                    }
+                    victim = dataHolder.getUser(match.get(0).getName());
+                    destGroup = dataHolder.getGroup(args[1]);
+                    if (destGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group not found!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!isConsole && (match.get(0).isOp() || playerGroup != null ? permissionHandler.inGroup(victim.getName(), playerGroup.getName()) : false)) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
+                        return false;
+                    }
+                    if (!isConsole && (permissionHandler.checkGroupWithInheritance(destGroup, playerGroup.getName(),null))) {
+                        sender.sendMessage(ChatColor.RED + "The destination group can't be the same as yours, or higher.");
+                        return false;
+                    }
+                    if (!isConsole && (!permissionHandler.inGroup(playerUser.getName(), victim.getGroupName()) || !permissionHandler.inGroup(playerUser.getName(), destGroup.getName()))) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group of different heritage line.");
+                        return false;
+                    }
+                    if (!isConsole && (permissionHandler.checkGroupWithInheritance(destGroup, victim.getGroupName(), null))) {
+                        sender.sendMessage(ChatColor.RED + "The new group must not inherit the old group. The new group must be a lower rank.");
+                        return false;
+                    }
+                    //PARECE OK
+                    victim.setGroup(destGroup);
+                    sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+                    return true;
+                //break;
                 default:
                     break;
             }
