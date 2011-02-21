@@ -58,13 +58,13 @@ public class OverloadedDataHolder extends DataHolder {
      */
     @Override
     public void addUser(User theUser) {
-        if(theUser.getDataSource() != this){
+        if (theUser.getDataSource() != this) {
             theUser = theUser.clone(this);
         }
-        if(theUser==null){
+        if (theUser == null) {
             return;
         }
-        if((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroupName()))){
+        if ((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroupName()))) {
             theUser.setGroup(defaultGroup);
         }
         //OVERLOADED CODE
@@ -94,6 +94,36 @@ public class OverloadedDataHolder extends DataHolder {
         if (users.containsKey(userName.toLowerCase())) {
             users.remove(userName.toLowerCase());
             return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean removeGroup(String groupName) {
+        if (groupName.equals(defaultGroup)) {
+            return false;
+        }
+        for (String key : groups.keySet()) {
+            if (groupName.equalsIgnoreCase(key)) {
+                groups.remove(key);
+                for (String userKey : users.keySet()) {
+                    User user = users.get(userKey);
+                    if (user.getGroupName().equalsIgnoreCase(key)) {
+                        user.setGroup(defaultGroup);
+                    }
+
+                }
+                //OVERLOADED CODE
+                for (String userKey : overloadedUsers.keySet()) {
+                    User user = overloadedUsers.get(userKey);
+                    if (user.getGroupName().equalsIgnoreCase(key)) {
+                        user.setGroup(defaultGroup);
+                    }
+
+                }
+                //END OVERLOAD
+                return true;
+            }
         }
         return false;
     }
@@ -149,7 +179,7 @@ public class OverloadedDataHolder extends DataHolder {
         overloadedUsers.remove(userName.toLowerCase());
         //System.out.println("Grupo depois " + this.getUser(userName).group.getName());
     }
-    
+
     /**
      *  Gets the user in normal state. Surpassing the overload state.
      * It doesn't affect permissions. But it enables plugins change the
@@ -157,11 +187,11 @@ public class OverloadedDataHolder extends DataHolder {
      * @param userName
      * @return
      */
-    public User surpassOverload(String userName){
-        if(!isOverloaded(userName)){
+    public User surpassOverload(String userName) {
+        if (!isOverloaded(userName)) {
             return getUser(userName);
         }
-        if(users.containsKey(userName.toLowerCase())){
+        if (users.containsKey(userName.toLowerCase())) {
             return users.get(userName.toLowerCase());
         }
         User newUser = createUser(userName);

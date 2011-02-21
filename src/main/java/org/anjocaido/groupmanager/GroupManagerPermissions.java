@@ -9,43 +9,29 @@ package org.anjocaido.groupmanager;
  * @author gabrielcouto
  */
 public enum GroupManagerPermissions {
-    /**
-     *
-     */
-    mangroup,
-    /**
-     *
-     */
-    addpermission,
-    /**
-     *
-     */
+    manuadd,
+    manudel,
+    mangadd,
+    mangdel,
+    manuaddp,
+    manudelp,
+    manulistp,
+    manucheckp,
+    mangaddp,
+    mangdelp,
+    manglistp,
+    mangcheckp,
+    mangaddi,
+    mangdeli,
     manwhois,
-    /**
-     *
-     */
-    overload,
-    /**
-     * 
-     */
-    underload,
-    /**
-     *
-     */
-    listoverload,
-    /**
-     *
-     */
-    underloadall,
-    /**
-     *
-     */
-    mancommit,
-    /**
-     *
-     */
-    manreload,
+    tempadd,
+    tempdel,
+    templist,
+    tempdelall,
+    mansave,
+    manload,
     listgroups,
     manpromote,
-    mandemote
+    mandemote,
+    mantogglevalidate
 }

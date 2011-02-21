@@ -179,6 +179,12 @@ public class DataHolder {
         for (String key : groups.keySet()) {
             if (groupName.equalsIgnoreCase(key)) {
                 groups.remove(key);
+                for (String userKey : users.keySet()) {
+                    User user = users.get(userKey);
+                    if (user.getGroupName().equalsIgnoreCase(key)) {
+                        user.setGroup(defaultGroup);
+                    }
+                }
                 return true;
             }
         }
