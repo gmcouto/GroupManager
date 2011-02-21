@@ -21,17 +21,7 @@ public class User implements Cloneable {
     /**
      *
      */
-    public Variables variables = new Variables();//NOT IMPLEMENTED YET, DO ON IT'S GROUP!
-    /**
-     * NOT IMPLEMENTED YET.
-     *
-     * There is plans to create info node for user. To receive variables.
-     * But it is not enabled yet.
-     *
-     *This one holds the fields in INFO node.
-     * like prefix = 'c'
-     * or build = false
-     */
+    //public Variables variables = new Variables();//NOT IMPLEMENTED YET, DO ON IT'S GROUP!
     public ArrayList<String> permissions = new ArrayList<String>();
     /**
      *
@@ -83,7 +73,7 @@ public class User implements Cloneable {
         User clone = new User(getDataSource(),this.name);
         clone.setGroup(this.getGroup());
         clone.permissions = (ArrayList<String>) this.permissions.clone();
-        clone.variables = this.variables.clone();
+        //clone.variables = this.variables.clone();
         return clone;
     }
 
@@ -103,7 +93,7 @@ public class User implements Cloneable {
             clone.setGroup(this.getGroupName());
         }
         clone.permissions = (ArrayList<String>) this.permissions.clone();
-        clone.variables = this.variables.clone();
+        //clone.variables = this.variables.clone();
         return clone;
     }
 

@@ -18,14 +18,14 @@ import java.util.Set;
  *
  * @author gabrielcouto
  */
-public class Variables implements Cloneable{
+public class Variables implements Cloneable {
 
     private Map<String, Object> variables = new HashMap<String, Object>();
 
     /**
      *
      */
-    public Variables(){
+    public Variables() {
         variables = new HashMap<String, Object>();
     }
 
@@ -33,7 +33,7 @@ public class Variables implements Cloneable{
      *
      * @param varList
      */
-    public Variables(Map<String, Object> varList){
+    public Variables(Map<String, Object> varList) {
         variables = varList;
     }
 
@@ -46,6 +46,9 @@ public class Variables implements Cloneable{
      * @param o the object value of the var
      */
     public void addVar(String name, Object o) {
+        if(o==null){
+            return;
+        }
         if (variables.containsKey(name)) {
             variables.remove(name);
         }
@@ -135,17 +138,44 @@ public class Variables implements Cloneable{
             variables.remove(name);
         } catch (Exception e) {
         }
+        if(name.equals("prefix")){
+            addVar("prefix", "");
+        } else if(name.equals("suffix")){
+            addVar("suffix", "");
+        } else if(name.equals("build")){
+            addVar("build", false);
+        }
     }
+
     /**
      *  A clone of all vars here.
      * @return
      */
     @Override
-    public Variables clone(){
+    public Variables clone() {
         Variables clone = new Variables();
-        for(String key: this.variables.keySet()){
+        for (String key : this.variables.keySet()) {
             clone.variables.put(key, this.variables.get(key));
         }
         return clone;
+    }
+
+    public static Object parseVariableValue(String value) {
+        try {
+            Integer i = Integer.parseInt(value);
+            return i;
+        } catch (NumberFormatException e) {
+        }
+        try {
+            Double d = Double.parseDouble(value);
+            return d;
+        } catch (NumberFormatException e) {
+        }
+        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
+            return true;
+        } else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
+            return false;
+        }
+        return value;
     }
 }

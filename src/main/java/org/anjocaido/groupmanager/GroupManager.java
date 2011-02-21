@@ -78,10 +78,11 @@ public class GroupManager extends JavaPlugin {
     @Override
     public void onEnable() {
         PluginDescriptionFile pdfFile = this.getDescription();
+
         if (dataHolder == null) {
             System.out.println("Can't enable " + pdfFile.getName() + " version " + pdfFile.getVersion() + ", bad loading!");
             this.getServer().getPluginManager().disablePlugin(this);
-            return;
+            throw new IllegalStateException("An error ocurred while loading GroupManager");
         }
         doBackup();
         reload();
@@ -161,8 +162,8 @@ public class GroupManager extends JavaPlugin {
             } catch (Exception e) {
             }
             scheduler = null;
+            System.out.println(this.getDescription().getName() + " - Scheduled Data Saving has been disabled!");
         }
-        System.out.println(this.getDescription().getName() + " - Scheduled Data Saving has been disabled!");
     }
 
     /**
@@ -657,7 +658,7 @@ public class GroupManager extends JavaPlugin {
                     sender.sendMessage(ChatColor.RED + "Somehow the group has access, but I can't find where!");
                     return false;
                 case mangaddi:
-                     //VALIDANDO ARGUMENTOS
+                    //VALIDANDO ARGUMENTOS
                     if (args.length != 2) {
                         sender.sendMessage(ChatColor.RED + "Review your arguments count!");
                         return false;
@@ -673,16 +674,16 @@ public class GroupManager extends JavaPlugin {
                         return false;
                     }
                     //VALIDANDO PERMISSAO
-                    if(permissionHandler.searchGroupInInheritance(auxGroup, auxGroup2.getName(), null)){
-                        sender.sendMessage(ChatColor.RED + "Group "+auxGroup.getName()+" already inherits "+auxGroup2.getName()+" (might not be directly)");
+                    if (permissionHandler.searchGroupInInheritance(auxGroup, auxGroup2.getName(), null)) {
+                        sender.sendMessage(ChatColor.RED + "Group " + auxGroup.getName() + " already inherits " + auxGroup2.getName() + " (might not be directly)");
                         return false;
                     }
                     //PARECE OK
                     auxGroup.addInherits(auxGroup2);
-                    sender.sendMessage(ChatColor.RED + "Group  "+auxGroup2.getName()+" is now in "+auxGroup.getName()+" inheritance list.");
+                    sender.sendMessage(ChatColor.RED + "Group  " + auxGroup2.getName() + " is now in " + auxGroup.getName() + " inheritance list.");
                     return true;
                 case mangdeli:
-                     //VALIDANDO ARGUMENTOS
+                    //VALIDANDO ARGUMENTOS
                     if (args.length != 2) {
                         sender.sendMessage(ChatColor.RED + "Review your arguments count!");
                         return false;
@@ -698,17 +699,106 @@ public class GroupManager extends JavaPlugin {
                         return false;
                     }
                     //VALIDANDO PERMISSAO
-                    if(!permissionHandler.searchGroupInInheritance(auxGroup, auxGroup2.getName(), null)){
-                        sender.sendMessage(ChatColor.RED + "Group "+auxGroup.getName()+" does not inherits "+auxGroup2.getName()+".");
+                    if (!permissionHandler.searchGroupInInheritance(auxGroup, auxGroup2.getName(), null)) {
+                        sender.sendMessage(ChatColor.RED + "Group " + auxGroup.getName() + " does not inherits " + auxGroup2.getName() + ".");
                         return false;
                     }
-                    if(!auxGroup.getInherits().contains(auxGroup2.getName())){
-                        sender.sendMessage(ChatColor.RED + "Group "+auxGroup.getName()+" does not inherits "+auxGroup2.getName()+" directly.");
+                    if (!auxGroup.getInherits().contains(auxGroup2.getName())) {
+                        sender.sendMessage(ChatColor.RED + "Group " + auxGroup.getName() + " does not inherits " + auxGroup2.getName() + " directly.");
                         return false;
                     }
                     //PARECE OK
                     auxGroup.removeInherits(auxGroup2.getName());
-                    sender.sendMessage(ChatColor.RED + "Group  "+auxGroup2.getName()+" was removed from "+auxGroup.getName()+" inheritance list.");
+                    sender.sendMessage(ChatColor.RED + "Group  " + auxGroup2.getName() + " was removed from " + auxGroup.getName() + " inheritance list.");
+                    return true;
+                case mangaddv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 3) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    auxGroup = dataHolder.getGroup(args[0]);
+                    if (auxGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group does not exists!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    //PARECE OK
+                    auxGroup.variables.addVar(args[1], Variables.parseVariableValue(args[2]));
+                    sender.sendMessage(ChatColor.YELLOW+"Variable "+ ChatColor.GOLD + args[1] + ChatColor.YELLOW + ":"+ ChatColor.GREEN + args[2] + ChatColor.YELLOW +" added to the group " + auxGroup.getName());
+                    return true;
+                case mangdelv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    auxGroup = dataHolder.getGroup(args[0]);
+                    if (auxGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group does not exists!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!auxGroup.variables.hasVar(args[1])) {
+                        sender.sendMessage(ChatColor.RED + "The group doesn't have directly that variable!");
+                    }
+                    //PARECE OK
+                    auxGroup.variables.removeVar(args[1]);
+                    sender.sendMessage(ChatColor.YELLOW+"Variable "+ ChatColor.GOLD + args[1] + ChatColor.YELLOW+ " removed from the group " + ChatColor.GREEN + auxGroup.getName());
+                    return true;
+                case manglistv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 1) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    auxGroup = dataHolder.getGroup(args[0]);
+                    if (auxGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group does not exists!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    //PARECE OK
+                    auxString = "";
+                    for (String varKey : auxGroup.variables.getVarKeyList()) {
+                        Object o = auxGroup.variables.getVarObject(varKey);
+                        auxString += ChatColor.GOLD + varKey + ChatColor.WHITE +  ":'" + ChatColor.GREEN + o.toString() + ChatColor.WHITE +"', ";
+                    }
+                    if (auxString.lastIndexOf(",") > 0) {
+                        auxString = auxString.substring(0, auxString.lastIndexOf(","));
+                    }
+                    sender.sendMessage(ChatColor.YELLOW + "Variables of group " + auxGroup.getName() + ": ");
+                    sender.sendMessage(auxString+".");
+                    auxString = "";
+                    for (String grp : auxGroup.getInherits()) {
+                        auxString += grp + ", ";
+                    }
+                    if (auxString.lastIndexOf(",") > 0) {
+                        auxString = auxString.substring(0, auxString.lastIndexOf(","));
+                        sender.sendMessage(ChatColor.YELLOW + "Plus all variables from groups: " + auxString);
+                    }
+                    return true;
+                case mangcheckv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    auxGroup = dataHolder.getGroup(args[0]);
+                    if (auxGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group does not exists!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    auxGroup2 = permissionHandler.nextGroupWithVariable(auxGroup, args[1], null);
+                    if (auxGroup2==null) {
+                        sender.sendMessage(ChatColor.RED + "The group doesn't have access to that variable!");
+                    }
+                    //PARECE OK
+                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '"+ChatColor.GOLD+args[1]+ChatColor.YELLOW+"' is: '"+ChatColor.GREEN+auxGroup2.variables.getVarObject(args[1]).toString()+ChatColor.WHITE+"'");
+                    if(!auxGroup.equals(auxGroup2)){
+                        sender.sendMessage(ChatColor.YELLOW + "And the value was inherited from group: "+ChatColor.GREEN+auxGroup2.getName());
+                    }
                     return true;
                 case manwhois:
                     //VALIDANDO ARGUMENTOS
@@ -893,7 +983,6 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "The new group must be a higher rank.");
                         return false;
                     }
-
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
                     sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
@@ -946,12 +1035,13 @@ public class GroupManager extends JavaPlugin {
                 //break;
                 case mantogglevalidate:
                     validateOnlinePlayer = !validateOnlinePlayer;
-                    sender.sendMessage(ChatColor.YELLOW+"Validade if player is online, now set to: "+Boolean.toString(validateOnlinePlayer));
+                    sender.sendMessage(ChatColor.YELLOW + "Validade if player is online, now set to: " + Boolean.toString(validateOnlinePlayer));
                     return true;
                 default:
                     break;
             }
         }
+        sender.sendMessage(ChatColor.RED+"You are not allowed to use that command.");
         return false;
     }
 }

@@ -4,9 +4,13 @@
  */
 package org.anjocaido.groupmanager;
 
+import com.nijiko.permissions.Control;
 import com.nijiko.permissions.PermissionHandler;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 import org.anjocaido.groupmanager.Group;
 import org.anjocaido.groupmanager.DataHolder;
@@ -21,7 +25,7 @@ import org.bukkit.entity.Player;
  *
  * @author gabrielcouto
  */
-public class AnjoPermissionsHandler extends PermissionHandler {
+public class AnjoPermissionsHandler extends Control {
 
     DataHolder ph = null;
 
@@ -30,6 +34,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @param holder
      */
     public AnjoPermissionsHandler(DataHolder holder) {
+        super(null);
         ph = holder;
     }
 
@@ -84,7 +89,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     public boolean inGroup(String name, String group) {
         //System.out.println("Verifying inGroup user "+name+" with "+group);
 
-        return searchGroupInInheritance(ph.getUser(name).getGroup(),group,null);
+        return searchGroupInInheritance(ph.getUser(name).getGroup(), group, null);
     }
 
     /**
@@ -138,11 +143,13 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public String getGroupPermissionString(String group, String variable) {
         Group start = ph.getGroup(group);
-        if(start == null)
+        if (start == null) {
             return null;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return null;
+        }
         return result.variables.getVarString(variable);
     }
 
@@ -155,11 +162,13 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public int getGroupPermissionInteger(String group, String variable) {
         Group start = ph.getGroup(group);
-        if(start == null)
+        if (start == null) {
             return -1;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return -1;
+        }
         return result.variables.getVarInteger(variable);
     }
 
@@ -172,11 +181,13 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public boolean getGroupPermissionBoolean(String group, String variable) {
         Group start = ph.getGroup(group);
-        if(start == null)
+        if (start == null) {
             return false;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return false;
+        }
         return result.variables.getVarBoolean(variable);
     }
 
@@ -189,11 +200,13 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public double getGroupPermissionDouble(String group, String variable) {
         Group start = ph.getGroup(group);
-        if(start == null)
+        if (start == null) {
             return -1;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return -1;
+        }
         return result.variables.getVarDouble(variable);
     }
 
@@ -206,14 +219,17 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public String getUserPermissionString(String user, String variable) {
         User auser = ph.getUser(user);
-        if(auser == null)
+        if (auser == null) {
             return null;
+        }
         Group start = auser.getGroup();
-        if(start == null)
+        if (start == null) {
             return null;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return null;
+        }
         return result.variables.getVarString(variable);
     }
 
@@ -226,14 +242,17 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public int getUserPermissionInteger(String user, String variable) {
         User auser = ph.getUser(user);
-        if(auser == null)
+        if (auser == null) {
             return -1;
+        }
         Group start = auser.getGroup();
-        if(start == null)
+        if (start == null) {
             return -1;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return -1;
+        }
         return result.variables.getVarInteger(variable);
     }
 
@@ -246,14 +265,17 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public boolean getUserPermissionBoolean(String user, String variable) {
         User auser = ph.getUser(user);
-        if(auser == null)
+        if (auser == null) {
             return false;
+        }
         Group start = auser.getGroup();
-        if(start == null)
+        if (start == null) {
             return false;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return false;
+        }
         return result.variables.getVarBoolean(variable);
     }
 
@@ -266,14 +288,17 @@ public class AnjoPermissionsHandler extends PermissionHandler {
     @Override
     public double getUserPermissionDouble(String user, String variable) {
         User auser = ph.getUser(user);
-        if(auser == null)
+        if (auser == null) {
             return -1;
+        }
         Group start = auser.getGroup();
-        if(start == null)
+        if (start == null) {
             return -1;
+        }
         Group result = nextGroupWithVariable(start, variable, null);
-        if(result==null)
+        if (result == null) {
             return -1;
+        }
         return result.variables.getVarDouble(variable);
     }
 
@@ -327,42 +352,44 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @param permission
      * @return
      */
-    public String checkUserOnlyPermission(User user, String permission){
-        for(String access: user.permissions){
-            if(comparePermissionString(access, permission)){
+    public String checkUserOnlyPermission(User user, String permission) {
+        for (String access : user.permissions) {
+            if (comparePermissionString(access, permission)) {
                 return access;
             }
         }
         return null;
     }
+
     /**
      * Does not include User's group permission
      * @param user
      * @param permission
      * @return
      */
-    public String checkGroupOnlyPermission(Group group, String permission){
-        for(String access: group.permissions){
-            if(comparePermissionString(access, permission)){
+    public String checkGroupOnlyPermission(Group group, String permission) {
+        for (String access : group.permissions) {
+            if (comparePermissionString(access, permission)) {
                 return access;
             }
         }
         return null;
     }
+
     /**
      * Check permissions, including it's group and inheritance.
      * @param user
      * @param permission
      * @return
      */
-    public boolean checkUserPermission(User user, String permission){
-        if(user==null|| permission==null){
+    public boolean checkUserPermission(User user, String permission) {
+        if (user == null || permission == null) {
             return false;
         }
-        if(checkUserOnlyPermission(user, permission)!=null){
+        if (checkUserOnlyPermission(user, permission) != null) {
             return true;
         }
-        if(checkGroupPermissionWithInheritance(user.getGroup(),permission,null)){
+        if (checkGroupPermissionWithInheritance(user.getGroup(), permission, null)) {
             return true;
         }
         return false;
@@ -376,7 +403,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @return returns the closest inherited group with the variable.
      */
     public Group nextGroupWithVariable(Group start, String variable, List<Group> alreadyChecked) {
-        if(start==null || variable ==null){
+        if (start == null || variable == null) {
             return null;
         }
         if (alreadyChecked == null) {
@@ -409,7 +436,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @return true if it inherits the group.
      */
     public boolean searchGroupInInheritance(Group start, String askedGroup, List<Group> alreadyChecked) {
-        if(start==null || askedGroup ==null){
+        if (start == null || askedGroup == null) {
             return false;
         }
         if (alreadyChecked == null) {
@@ -418,7 +445,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         if (alreadyChecked.contains(start)) {
             return false;
         }
-        if(start.getName().equalsIgnoreCase(askedGroup)){
+        if (start.getName().equalsIgnoreCase(askedGroup)) {
             return true;
         }
         alreadyChecked.add(start);
@@ -439,7 +466,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @return
      */
     public boolean checkGroupPermissionWithInheritance(Group start, String permission, List<Group> alreadyChecked) {
-        if(nextGroupWithPermission(start, permission, alreadyChecked)!=null){
+        if (nextGroupWithPermission(start, permission, alreadyChecked) != null) {
             return true;
         }
         return false;
@@ -454,7 +481,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @return the group that passed on test. null if no group passed.
      */
     public Group nextGroupWithPermission(Group start, String permission, List<Group> alreadyChecked) {
-        if(start==null || permission ==null){
+        if (start == null || permission == null) {
             return null;
         }
         if (alreadyChecked == null) {
@@ -475,12 +502,41 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         for (String inherited : start.getInherits()) {
             Group groupInh = ph.getGroup(inherited);
             Group result = nextGroupWithPermission(groupInh, permission, alreadyChecked);
-            if (result!=null) {
+            if (result != null) {
                 return result;
             }
         }
         //System.out.println("No more to check!");
         return null;
+    }
+
+    /**
+     * Return the group that passes on the permission test. Checking whole
+     * inheritance chain.
+     * @param start
+     * @param permission
+     * @param alreadyChecked
+     * @return the group that passed on test. null if no group passed.
+     */
+    public ArrayList<Group> listAllGroupsInherited(Group start, ArrayList<Group> alreadyChecked) {
+        if (start == null) {
+            return null;
+        }
+        if (alreadyChecked == null) {
+            alreadyChecked = new ArrayList<Group>();
+        }
+        if (alreadyChecked.contains(start)) {
+            return alreadyChecked;
+        }
+        alreadyChecked.add(start);
+        for (String grp : start.getInherits()) {
+            Group g = ph.getGroup(grp);
+            if (g != null) {
+                listAllGroupsInherited(g, alreadyChecked);
+            }
+        }
+        //System.out.println("No more to check!");
+        return alreadyChecked;
     }
 
     /**
@@ -492,7 +548,7 @@ public class AnjoPermissionsHandler extends PermissionHandler {
      * @return
      */
     public boolean comparePermissionString(String userAcessLevel, String fullPermissionName) {
-        if(userAcessLevel==null || fullPermissionName ==null){
+        if (userAcessLevel == null || fullPermissionName == null) {
             return false;
         }
         //System.out.println("Comparing acess "+userAcessLevel+" with "+fullPermissionName);
@@ -521,5 +577,12 @@ public class AnjoPermissionsHandler extends PermissionHandler {
         }
         //System.out.println("FAIL");
         return false;
+    }
+
+    @Override
+    public String[] getGroups(String userName) {
+        ArrayList<Group> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
+        String[] arr = new String[listAllGroupsInherited.size()];
+        return listAllGroupsInherited.toArray(arr);
     }
 }
