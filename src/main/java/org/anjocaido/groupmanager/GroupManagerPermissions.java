@@ -37,5 +37,6 @@ public enum GroupManagerPermissions {
     listgroups,
     manpromote,
     mandemote,
-    mantogglevalidate
+    mantogglevalidate,
+    mantogglesave
 }

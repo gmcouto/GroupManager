@@ -285,17 +285,17 @@ public class DataHolder {
         } finally {
             rx.close();
         }
-        Map<String, String> inheritance = new HashMap<String, String>();
+        Map<String, List<String>> inheritance = new HashMap<String, List<String>>();
         try {
             Map<String, Object> groupsNode = (Map<String, Object>) data1.get("groups");
             for (String groupKey : groupsNode.keySet()) {
                 Map<String, Object> group = (Map<String, Object>) groupsNode.get(groupKey);
-                Group thisGrp = new Group(ph, groupKey);
+                Group thisGrp = ph.createGroup(groupKey);
                 if (group.get("default") == null) {
                     group.put("default", false);
                 }
                 if ((Boolean.parseBoolean(group.get("default").toString()))) {
-                    ph.defaultGroup = thisGrp;
+                    ph.setDefaultGroup(thisGrp);
                 }
 
                 //PERMISSIONS NODE
@@ -339,42 +339,53 @@ public class DataHolder {
                 } else if (inheritNode instanceof List) {
                     List<String> groupsInh = (List<String>) inheritNode;
                     for (String grp : groupsInh) {
+                        if(inheritance.get(groupKey)==null){
+                            List<String> thisInherits = new ArrayList<String>();
+                            inheritance.put(groupKey, thisInherits);
+                        }
+                        inheritance.get(groupKey).add(grp);
                         //System.out.println("Found inheritance "+grp+" for group"+groupKey);
-                        inheritance.put(groupKey, grp);
+                        
                     }
                 }
-                ph.groups.put(thisGrp.getName(), thisGrp);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new Exception("Your Permissions config file is invalid.  See console for details.");
         }
         for (String groupKey : inheritance.keySet()) {
-            String inherited = inheritance.get(groupKey);
-            //System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
-            if (ph.groups.containsKey(groupKey) && ph.groups.containsKey(inherited)) {
-                Group grp = ph.groups.get(groupKey);
-                Group inh = ph.groups.get(inherited);
-                grp.addInherits(inh);
+            List<String> inheritedList = inheritance.get(groupKey);
+            Group thisGroup = ph.getGroup(groupKey);
+            for(String inheritedKey: inheritedList){
+                Group inheritedGroup = ph.getGroup(inheritedKey);
+                if(thisGroup!=null && inheritedGroup!=null){
+                    thisGroup.addInherits(inheritedGroup);
+                    //System.out.println("Adding inheritance "+groupKey+" for group "+inheritedKey);
+                }
             }
+            //System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
         }
-        // Process users to check for invalid value and determine group
+        // Process USERS
         Map<String, Object> usersNode = (Map<String, Object>) data1.get("users");
         for (String usersKey : usersNode.keySet()) {
             Map<String, Object> node = (Map<String, Object>) usersNode.get(usersKey);
-            User thisUser = new User(ph, usersKey);
+            User thisUser = ph.createUser(usersKey);
             if (node.get("permissions") == null) {
                 node.put("permissions", new ArrayList<String>());
             }
-            thisUser.permissions = (ArrayList<String>) node.get("permissions");
+            if (node.get("permissions") instanceof List) {
+                for (Object o : ((List) node.get("permissions"))) {
+                    thisUser.permissions.add(o.toString());
+                }
+            } else if (node.get("permissions") instanceof String) {
+                thisUser.permissions.add(node.get("permissions").toString());
+            }
 
-            if (node.get("group") != null) {
-                thisUser.setGroup(ph.groups.get(node.get("group")));
+            if (node.get("group") != null && ph.getGroup(node.get("group").toString()) != null) {
+                thisUser.setGroup(ph.getGroup(node.get("group").toString()));
             } else {
                 thisUser.setGroup(ph.defaultGroup);
             }
-
-            ph.users.put(thisUser.getName(), thisUser);
         }
         return ph;
     }
@@ -466,10 +477,10 @@ public class DataHolder {
      * without need to save the file.
      *
      * @param server the server that holds the plugin
-     * @deprecated use only with the old Nijikokun's Original Permissions Plugin
+     * @deprecated it is not used anymore... unless if you use original Permissions
      */
     @Deprecated
-    public static void reloadOldPlugin(Server server) {
+    public static void reloadOldPlugins(Server server) {
         // Only reload permissions
         PluginManager pm = server.getPluginManager();
         Plugin[] plugins = pm.getPlugins();

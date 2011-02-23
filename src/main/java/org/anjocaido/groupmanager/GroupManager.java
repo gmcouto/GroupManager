@@ -47,22 +47,6 @@ public class GroupManager extends JavaPlugin {
     private Configuration config;
     private boolean validateOnlinePlayer = true;
 
-    /**
-     *
-     * @param pluginLoader
-     * @param instance
-     * @param desc
-     * @param folder
-     * @param plugin
-     * @param cLoader
-     */
-    public GroupManager(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader) {
-        super(pluginLoader, instance, desc, folder, plugin, cLoader);
-        prepareFileFields();
-        prepareConfig();
-        prepareData();
-    }
-
     @Override
     public void onDisable() {
         //throw new UnsupportedOperationException("Not supported yet.");
@@ -77,44 +61,52 @@ public class GroupManager extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        PluginDescriptionFile pdfFile = this.getDescription();
+        prepareFileFields();
+        prepareConfig();
+        doBackup();
+        prepareData();
 
+        PluginDescriptionFile pdfFile = this.getDescription();
         if (dataHolder == null) {
             System.out.println("Can't enable " + pdfFile.getName() + " version " + pdfFile.getVersion() + ", bad loading!");
             this.getServer().getPluginManager().disablePlugin(this);
             throw new IllegalStateException("An error ocurred while loading GroupManager");
         }
-        doBackup();
-        reload();
+
         enableScheduler();
-        //
         // EXAMPLE: Custom code, here we just output some info so we can check all is well
         System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
     }
 
     private void prepareData() {
-        if (!permissionsFile.exists()) {
-            if (nijikokunPermissionsFile.exists()) {
-                try {
-                    copy(nijikokunPermissionsFile, permissionsFile);
-                } catch (IOException ex) {
-                    Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
+        if (dataHolder == null) {
+            if (!permissionsFile.exists()) {
+                if (nijikokunPermissionsFile.exists()) {
+                    try {
+                        copy(nijikokunPermissionsFile, permissionsFile);
+                    } catch (IOException ex) {
+                        Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (!permissionsFile.exists()) {
+                    this.getPluginLoader().disablePlugin(this);
+                    dataHolder = null;
+                    throw new IllegalStateException("There is no permissions file! " + permissionsFile.getPath());
                 }
             }
-            if (!permissionsFile.exists()) {
-                this.getPluginLoader().disablePlugin(this);
+            try {
+                dataHolder = new OverloadedDataHolder(DataHolder.load(permissionsFile));
+            } catch (Exception ex) {
                 dataHolder = null;
-                throw new IllegalStateException("There is no permissions file! " + permissionsFile.getPath());
+                Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
+                throw new IllegalArgumentException("Permissions file is in wrong format");
             }
+        } else {
+            dataHolder.reload();
         }
-        try {
-            dataHolder = new OverloadedDataHolder(DataHolder.load(permissionsFile));
-        } catch (Exception ex) {
-            dataHolder = null;
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
-            throw new IllegalArgumentException("Permissions file is in wrong format");
+        if (permissionHandler == null) {
+            permissionHandler = new AnjoPermissionsHandler(dataHolder);
         }
-        permissionHandler = new AnjoPermissionsHandler(dataHolder);
     }
 
     private void prepareFileFields() {
@@ -289,8 +281,37 @@ public class GroupManager extends JavaPlugin {
         Group auxGroup = null;
         Group auxGroup2 = null;
 
+        GroupManagerPermissions execCmd = null;
+        try {
+            execCmd = GroupManagerPermissions.valueOf(cmd.getName());
+        } catch (Exception e) {
+            System.out.println("===================================================");
+            System.out.println("=              ERROR REPORT START                 =");
+            System.out.println("===================================================");
+            System.out.println("=  COPY AND PASTE THIS TO GROUPMANAGER DEVELOPER  =");
+            System.out.println("===================================================");
+            System.out.println(this.getDescription().getName());
+            System.out.println(this.getDescription().getVersion());
+            System.out.println("An error occured while trying to execute command:");
+            System.out.println(cmd.getName());
+            System.out.println("With " + args.length + " arguments:");
+            for (String ar : args) {
+                System.out.println(ar);
+            }
+            System.out.println("The field '" + cmd.getName() + "' was not found in enum.");
+            System.out.println("And could not be parsed.");
+            System.out.println("FIELDS FOUND IN ENUM:");
+            for (GroupManagerPermissions val : GroupManagerPermissions.values()) {
+                System.out.println(val);
+            }
+            System.out.println("===================================================");
+            System.out.println("=              ERROR REPORT ENDED                 =");
+            System.out.println("===================================================");
+            sender.sendMessage("An error occurred. Ask the admin to take a look at the console.");
+        }
+
         if (isConsole || playerCanDo) {
-            switch (GroupManagerPermissions.valueOf(cmd.getName())) {
+            switch (execCmd) {
                 case manuadd:
                     //VALIDANDO ARGUMENTOS
                     if (args.length != 2) {
@@ -322,6 +343,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
                     sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+
                     return true;
                 //break;
                 case manudel:
@@ -350,6 +372,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     dataHolder.removeUser(auxUser.getName());
                     sender.sendMessage(ChatColor.YELLOW + "You changed that player to default group.");
+
                     return true;
                 case mangadd:
                     //VALIDANDO ARGUMENTOS
@@ -365,6 +388,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxGroup = dataHolder.createGroup(args[0]);
                     sender.sendMessage(ChatColor.YELLOW + "You created a group named: " + auxGroup.getName());
+
                     return true;
                 case mangdel:
                     //VALIDANDO ARGUMENTOS
@@ -380,6 +404,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     dataHolder.removeGroup(auxGroup.getName());
                     sender.sendMessage(ChatColor.YELLOW + "You deleted a group named " + auxGroup.getName() + ", it's users are default group now.");
+
                     return true;
                 case manuaddp:
                     //VALIDANDO ARGUMENTOS
@@ -417,6 +442,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxUser.permissions.add(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You added '" + args[1] + "' to player '" + auxUser.getName() + "' permissions.");
+
                     return true;
                 //break;
                 case manudelp:
@@ -459,6 +485,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxUser.permissions.remove(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You removed '" + args[1] + "' from player '" + auxUser.getName() + "' permissions.");
+
                     return true;
                 //break;
                 case manulistp:
@@ -551,6 +578,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxGroup.permissions.add(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You added '" + args[1] + "' to group '" + auxGroup.getName() + "' permissions.");
+
                     return true;
                 case mangdelp:
                     //VALIDANDO ARGUMENTOS
@@ -579,6 +607,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxGroup.permissions.remove(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You removed '" + args[1] + "' from group '" + auxGroup.getName() + "' permissions.");
+
                     return true;
                 case manglistp:
                     //VALIDANDO ARGUMENTOS
@@ -681,6 +710,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxGroup.addInherits(auxGroup2);
                     sender.sendMessage(ChatColor.RED + "Group  " + auxGroup2.getName() + " is now in " + auxGroup.getName() + " inheritance list.");
+
                     return true;
                 case mangdeli:
                     //VALIDANDO ARGUMENTOS
@@ -710,10 +740,11 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxGroup.removeInherits(auxGroup2.getName());
                     sender.sendMessage(ChatColor.RED + "Group  " + auxGroup2.getName() + " was removed from " + auxGroup.getName() + " inheritance list.");
+
                     return true;
                 case mangaddv:
                     //VALIDANDO ARGUMENTOS
-                    if (args.length != 3) {
+                    if (args.length < 3) {
                         sender.sendMessage(ChatColor.RED + "Review your arguments count!");
                         return false;
                     }
@@ -724,8 +755,16 @@ public class GroupManager extends JavaPlugin {
                     }
                     //VALIDANDO PERMISSAO
                     //PARECE OK
-                    auxGroup.variables.addVar(args[1], Variables.parseVariableValue(args[2]));
-                    sender.sendMessage(ChatColor.YELLOW+"Variable "+ ChatColor.GOLD + args[1] + ChatColor.YELLOW + ":"+ ChatColor.GREEN + args[2] + ChatColor.YELLOW +" added to the group " + auxGroup.getName());
+                    auxString = "";
+                    for (int i = 2; i < args.length; i++) {
+                        auxString += args[i];
+                        if ((i + 1) < args.length) {
+                            auxString += " ";
+                        }
+                    }
+                    auxGroup.variables.addVar(args[1], Variables.parseVariableValue(auxString));
+                    sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + ":'" + ChatColor.GREEN + auxString + ChatColor.YELLOW + "' added to the group " + auxGroup.getName());
+
                     return true;
                 case mangdelv:
                     //VALIDANDO ARGUMENTOS
@@ -744,7 +783,8 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     auxGroup.variables.removeVar(args[1]);
-                    sender.sendMessage(ChatColor.YELLOW+"Variable "+ ChatColor.GOLD + args[1] + ChatColor.YELLOW+ " removed from the group " + ChatColor.GREEN + auxGroup.getName());
+                    sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + " removed from the group " + ChatColor.GREEN + auxGroup.getName());
+
                     return true;
                 case manglistv:
                     //VALIDANDO ARGUMENTOS
@@ -762,13 +802,13 @@ public class GroupManager extends JavaPlugin {
                     auxString = "";
                     for (String varKey : auxGroup.variables.getVarKeyList()) {
                         Object o = auxGroup.variables.getVarObject(varKey);
-                        auxString += ChatColor.GOLD + varKey + ChatColor.WHITE +  ":'" + ChatColor.GREEN + o.toString() + ChatColor.WHITE +"', ";
+                        auxString += ChatColor.GOLD + varKey + ChatColor.WHITE + ":'" + ChatColor.GREEN + o.toString() + ChatColor.WHITE + "', ";
                     }
                     if (auxString.lastIndexOf(",") > 0) {
                         auxString = auxString.substring(0, auxString.lastIndexOf(","));
                     }
                     sender.sendMessage(ChatColor.YELLOW + "Variables of group " + auxGroup.getName() + ": ");
-                    sender.sendMessage(auxString+".");
+                    sender.sendMessage(auxString + ".");
                     auxString = "";
                     for (String grp : auxGroup.getInherits()) {
                         auxString += grp + ", ";
@@ -791,13 +831,13 @@ public class GroupManager extends JavaPlugin {
                     }
                     //VALIDANDO PERMISSAO
                     auxGroup2 = permissionHandler.nextGroupWithVariable(auxGroup, args[1], null);
-                    if (auxGroup2==null) {
+                    if (auxGroup2 == null) {
                         sender.sendMessage(ChatColor.RED + "The group doesn't have access to that variable!");
                     }
                     //PARECE OK
-                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '"+ChatColor.GOLD+args[1]+ChatColor.YELLOW+"' is: '"+ChatColor.GREEN+auxGroup2.variables.getVarObject(args[1]).toString()+ChatColor.WHITE+"'");
-                    if(!auxGroup.equals(auxGroup2)){
-                        sender.sendMessage(ChatColor.YELLOW + "And the value was inherited from group: "+ChatColor.GREEN+auxGroup2.getName());
+                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '" + ChatColor.GOLD + args[1] + ChatColor.YELLOW + "' is: '" + ChatColor.GREEN + auxGroup2.variables.getVarObject(args[1]).toString() + ChatColor.WHITE + "'");
+                    if (!auxGroup.equals(auxGroup2)) {
+                        sender.sendMessage(ChatColor.YELLOW + "And the value was inherited from group: " + ChatColor.GREEN + auxGroup2.getName());
                     }
                     return true;
                 case manwhois:
@@ -856,6 +896,7 @@ public class GroupManager extends JavaPlugin {
                     dataHolder.overloadUser(auxUser.getName());
                     overloadedUsers.add(dataHolder.getUser(auxUser.getName()));
                     sender.sendMessage(ChatColor.YELLOW + "Player overloaded!");
+
                     return true;
                 //break;
                 case tempdel:
@@ -887,6 +928,7 @@ public class GroupManager extends JavaPlugin {
                         overloadedUsers.remove(auxUser);
                     }
                     sender.sendMessage(ChatColor.YELLOW + "You removed that player overload. He's back to normal!");
+
                     return true;
                 //break;
                 case templist:
@@ -924,10 +966,12 @@ public class GroupManager extends JavaPlugin {
                     }
                     overloadedUsers.clear();
                     sender.sendMessage(ChatColor.YELLOW + " " + count + " Users in overload mode. Now they are normal again.");
+
                     return true;
                 case mansave:
                     commit();
                     sender.sendMessage(ChatColor.YELLOW + " Permissions saved.");
+
                     return true;
                 case manload:
                     reload();
@@ -986,6 +1030,7 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
                     sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+
                     return true;
                 //break;
                 case mandemote:
@@ -1031,17 +1076,31 @@ public class GroupManager extends JavaPlugin {
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
                     sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+
                     return true;
                 //break;
                 case mantogglevalidate:
                     validateOnlinePlayer = !validateOnlinePlayer;
                     sender.sendMessage(ChatColor.YELLOW + "Validade if player is online, now set to: " + Boolean.toString(validateOnlinePlayer));
+                    if (!validateOnlinePlayer) {
+                        sender.sendMessage(ChatColor.GOLD + "From now on you can edit players not connected... BUT:");
+                        sender.sendMessage(ChatColor.LIGHT_PURPLE + "From now on you should type the whole name of the player, correctly.");
+                    }
+                    return true;
+                case mantogglesave:
+                    if (scheduler == null) {
+                        enableScheduler();
+                        sender.sendMessage(ChatColor.YELLOW + "The auto-saving is enabled!");
+                    } else {
+                        disableScheduler();
+                        sender.sendMessage(ChatColor.YELLOW + "The auto-saving is disabled!");
+                    }
                     return true;
                 default:
                     break;
             }
         }
-        sender.sendMessage(ChatColor.RED+"You are not allowed to use that command.");
+        sender.sendMessage(ChatColor.RED + "You are not allowed to use that command.");
         return false;
     }
 }

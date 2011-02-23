@@ -1,5 +1,5 @@
 name: GroupManager
-version: 0.9
+version: 0.9c
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -93,4 +93,7 @@ commands:
     usage: /<command> <player> <group>
   mantogglevalidate:
     description: Toggle on/off the validating if player is online.
+    usage: /<command>
+  mantogglesave:
+    description: Toggle on/ff the autosave.
     usage: /<command>
