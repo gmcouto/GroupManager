@@ -65,7 +65,6 @@ public class GroupManager extends JavaPlugin {
         if (dataHolder == null) {
             prepareFileFields();
             prepareConfig();
-            doBackup();
             prepareData();
         }
 
@@ -92,12 +91,14 @@ public class GroupManager extends JavaPlugin {
                     }
                 }
                 if (!permissionsFile.exists()) {
-                    InputStream template = this.getClass().getResourceAsStream("data.yml");
+                    InputStream template = this.getClassLoader().getResourceAsStream("data.yml");
                     try {
                         copy(template, permissionsFile);
                     } catch (IOException ex) {
                         throw new IllegalArgumentException("Couldn't copy template to GroupManagerFolder");
                     }
+                } else {
+                    doBackup();
                 }
             }
             try {
@@ -290,6 +291,7 @@ public class GroupManager extends JavaPlugin {
         try {
             execCmd = GroupManagerPermissions.valueOf(cmd.getName());
         } catch (Exception e) {
+            //this error happened once with someone. now im prepared... i think
             System.out.println("===================================================");
             System.out.println("=              ERROR REPORT START                 =");
             System.out.println("===================================================");
