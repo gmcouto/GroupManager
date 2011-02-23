@@ -46,6 +46,7 @@ public class GroupManager extends JavaPlugin {
     private ArrayList<User> overloadedUsers = new ArrayList<User>();
     private Configuration config;
     private boolean validateOnlinePlayer = true;
+    private boolean isReady = false;
 
     @Override
     public void onDisable() {
@@ -61,10 +62,12 @@ public class GroupManager extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        prepareFileFields();
-        prepareConfig();
-        doBackup();
-        prepareData();
+        if (dataHolder == null) {
+            prepareFileFields();
+            prepareConfig();
+            doBackup();
+            prepareData();
+        }
 
         PluginDescriptionFile pdfFile = this.getDescription();
         if (dataHolder == null) {
@@ -89,9 +92,12 @@ public class GroupManager extends JavaPlugin {
                     }
                 }
                 if (!permissionsFile.exists()) {
-                    this.getPluginLoader().disablePlugin(this);
-                    dataHolder = null;
-                    throw new IllegalStateException("There is no permissions file! " + permissionsFile.getPath());
+                    InputStream template = this.getClass().getResourceAsStream("data.yml");
+                    try {
+                        copy(template, permissionsFile);
+                    } catch (IOException ex) {
+                        throw new IllegalArgumentException("Couldn't copy template to GroupManagerFolder");
+                    }
                 }
             }
             try {
@@ -101,12 +107,11 @@ public class GroupManager extends JavaPlugin {
                 Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
                 throw new IllegalArgumentException("Permissions file is in wrong format");
             }
+            permissionHandler = new AnjoPermissionsHandler(dataHolder);
         } else {
             dataHolder.reload();
         }
-        if (permissionHandler == null) {
-            permissionHandler = new AnjoPermissionsHandler(dataHolder);
-        }
+
     }
 
     private void prepareFileFields() {
