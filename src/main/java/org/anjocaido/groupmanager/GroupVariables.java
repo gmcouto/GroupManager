@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.anjocaido.groupmanager;
 
 import java.util.HashMap;
@@ -13,17 +12,32 @@ import java.util.Map;
  * @author gabrielcouto
  */
 public class GroupVariables extends Variables implements Cloneable {
+
     private Group owner;
 
-    public GroupVariables(Group owner){
-        this.owner = owner;
-    }
-    public GroupVariables(Group owner, Map<String, Object> varList) {
-        variables = varList;
+    public GroupVariables(Group owner) {
         this.owner = owner;
         addVar("prefix", "");
         addVar("suffix", "");
         addVar("build", false);
+    }
+
+    public GroupVariables(Group owner, Map<String, Object> varList) {
+        variables = varList;
+        if (variables.get("prefix") == null) {
+            variables.put("prefix", "");
+        }
+        //thisGrp.prefix = infoNode.get("prefix").toString();
+
+        if (variables.get("suffix") == null) {
+            variables.put("suffix", "");
+        }
+        //thisGrp.suffix = infoNode.get("suffix").toString();
+
+        if (variables.get("build") == null) {
+            variables.put("build", false);
+        }
+        this.owner = owner;
     }
 
     /**
@@ -48,11 +62,11 @@ public class GroupVariables extends Variables implements Cloneable {
             this.variables.remove(name);
         } catch (Exception e) {
         }
-        if(name.equals("prefix")){
+        if (name.equals("prefix")) {
             addVar("prefix", "");
-        } else if(name.equals("suffix")){
+        } else if (name.equals("suffix")) {
             addVar("suffix", "");
-        } else if(name.equals("build")){
+        } else if (name.equals("build")) {
             addVar("build", false);
         }
     }
@@ -63,5 +77,4 @@ public class GroupVariables extends Variables implements Cloneable {
     public Group getOwner() {
         return owner;
     }
-
 }

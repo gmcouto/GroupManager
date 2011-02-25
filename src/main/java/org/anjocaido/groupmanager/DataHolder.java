@@ -314,24 +314,11 @@ public class DataHolder {
 
                 //INFO NODE
                 Map<String, Object> infoNode = (Map<String, Object>) thisGroupNode.get("info");
-                if (infoNode == null) {
-                    infoNode = new HashMap<String, Object>();
+                if (infoNode != null){
+                    thisGrp.setVariables(infoNode);
                 }
-                if (infoNode.get("prefix") == null) {
-                    infoNode.put("prefix", "");
-                }
-                //thisGrp.prefix = infoNode.get("prefix").toString();
-
-                if (infoNode.get("suffix") == null) {
-                    infoNode.put("suffix", "");
-                }
-                //thisGrp.suffix = infoNode.get("suffix").toString();
-
-                if (infoNode.get("build") == null) {
-                    infoNode.put("build", false);
-                }
-                //thisGrp.canbuild = Boolean.parseBoolean(infoNode.get("build").toString());
-                thisGrp.setVariables(infoNode);
+                
+                //END INFO NODE
 
                 Object inheritNode = thisGroupNode.get("inheritance");
                 if (inheritNode == null) {
