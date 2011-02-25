@@ -1,84 +1,38 @@
-# Those under here doesn't matter on GroupManager... Permissions 2.0 had it.
-plugin:
-    permissions:
-        system: default
-
-##
-# Groups can contain inheritance.
-#   To make a group inherit the permissions from another 
-#   group simply place the groups name in the "inheritance:" 
-#   field seperated by commas.
-#
-#   Example: inheritance: Default,Admins,
-##
-#   All permissions including the asterisks must be placed in single quotes.
-#   like so:
-#
-#       - 'essentials.spawn'
-#
-#   Otherwise errors will happen!
-##
-#   Globalized Permission settings:
-#
-#       If a permission contains periods (.) you can denote a globalized parameter:
-#
-#           - 'essentials.*'
-#
-#       This will allow you to use all general commands.
-#
-##
-#
-#   Single Asterisk denotes all commands:
-#
-#       - '*'
-##
-groups:
-    Default:
-        default: true
-        info:
-            prefix: 
-            suffix:
-            build: true
-        inheritance: 
-        permissions:
-            - 'essentials.spawn'
-            - 'essentials.motd'
-            - 'essentials.help'
-            - 'essentials.home'
-            - 'essentials.sethome'
-    Moderator:
-        default: false
-        info:
-            prefix: 
-            suffix:
-            build: true
-        inheritance:
-            - Default
-        permissions:
-            - 'essentials.tp'
-            - 'essentials.tphere'
-            - 'essentials.item'
-            - 'essentials.give'
-    Admins:
-        default: false
-        info:
-            prefix: 
-            suffix:
-            build: true
-        inheritance:
-            - Moderator
-        permissions:
-            - '*'
-
-##
-# DarkGrave has control over all commands.
-# sk89q can use /spawn & /time
-##
 users:
-    darkgrave:
-        group: Admins
-        permissions:
-    sk89q:
-        group: Default
-        permissions:
-            - 'essentials.god'
+  gmcouto:
+    permissions: []
+    group: SemiAdmin
+    info: {prefix: '&c', suffix: 'SemiKing'}
+  anjocaido:
+    permissions: []
+    group: Admins
+    info: {prefix: '&c', suffix: 'King'}
+  zenexer:
+    permissions: [essentials.god]
+    group: Moderator
+    info: {prefix: '&c', suffix: 'Mod'}
+groups:
+  Default:
+    default: true
+    permissions: [essentials.spawn, essentials.motd, essentials.help, essentials.home,
+      essentials.sethome]
+    inheritance: []
+    info: {prefix: '', build: false, suffix: ''}
+  SemiAdmin:
+    default: false
+    permissions: [+groupmanager.mandemote, +groupmanager.manpromote, -groupmanager.*,
+      '*']
+    inheritance: [Moderator]
+    info: {prefix: '', build: false, suffix: ''}
+  Admins:
+    default: false
+    permissions: ['*']
+    inheritance: [SemiAdmin]
+    info: {prefix: '', build: false, suffix: ''}
+  Moderator:
+    default: false
+    permissions: [essentials.tp, essentials.tphere, essentials.item, essentials.give]
+    inheritance: [Default]
+    info: {prefix: '', build: false, suffix: ''}
+plugin:
+  permissions: {system: default}

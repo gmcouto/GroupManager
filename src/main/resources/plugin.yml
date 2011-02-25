@@ -1,5 +1,5 @@
 name: GroupManager
-version: 0.9e
+version: 0.99a
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -49,6 +49,18 @@ commands:
   mangdeli:
     description: Remove a group from another group inheritance list.
     usage: /<command> <group1> <group2>
+  manuaddv:
+    description: Add, or replaces, a variable to a user (like prefix or suffix).
+    usage: /<command> <user> <variable> <value>
+  manudelv:
+    description: Remove a variable from a user.
+    usage: /<command> <user> <variable>
+  manulistv:
+    description: List variables a user has (like prefix or suffix).
+    usage: /<command> <user>
+  manucheckv:
+    description: Verify a value of a variable of user, and where it comes from.
+    usage: /<command> <user> <variable>
   mangaddv:
     description: Add, or replaces, a variable to a group (like prefix or suffix).
     usage: /<command> <group> <variable> <value>
@@ -59,7 +71,7 @@ commands:
     description: List variables a group has (like prefix or suffix).
     usage: /<command> <group>
   mangcheckv:
-    description: Verify a value of a variable, and where it comes from.
+    description: Verify a value of a variable of group, and where it comes from.
     usage: /<command> <group> <variable>
   manwhois:
      description: Tell the group that user belongs.

@@ -8,6 +8,7 @@ import com.nijiko.permissions.Control;
 import com.nijiko.permissions.PermissionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -103,7 +104,7 @@ public class AnjoPermissionsHandler extends Control {
         if (g == null) {
             return null;
         }
-        return g.variables.getVarString("prefix");
+        return g.getVariables().getVarString("prefix");
     }
 
     /**
@@ -117,7 +118,7 @@ public class AnjoPermissionsHandler extends Control {
         if (g == null) {
             return null;
         }
-        return g.variables.getVarString("suffix");
+        return g.getVariables().getVarString("suffix");
     }
 
     /**
@@ -131,7 +132,7 @@ public class AnjoPermissionsHandler extends Control {
         if (g == null) {
             return false;
         }
-        return g.variables.getVarBoolean("build");
+        return g.getVariables().getVarBoolean("build");
     }
 
     /**
@@ -150,7 +151,7 @@ public class AnjoPermissionsHandler extends Control {
         if (result == null) {
             return null;
         }
-        return result.variables.getVarString(variable);
+        return result.getVariables().getVarString(variable);
     }
 
     /**
@@ -169,7 +170,7 @@ public class AnjoPermissionsHandler extends Control {
         if (result == null) {
             return -1;
         }
-        return result.variables.getVarInteger(variable);
+        return result.getVariables().getVarInteger(variable);
     }
 
     /**
@@ -188,7 +189,7 @@ public class AnjoPermissionsHandler extends Control {
         if (result == null) {
             return false;
         }
-        return result.variables.getVarBoolean(variable);
+        return result.getVariables().getVarBoolean(variable);
     }
 
     /**
@@ -207,7 +208,7 @@ public class AnjoPermissionsHandler extends Control {
         if (result == null) {
             return -1;
         }
-        return result.variables.getVarDouble(variable);
+        return result.getVariables().getVarDouble(variable);
     }
 
     /**
@@ -220,17 +221,9 @@ public class AnjoPermissionsHandler extends Control {
     public String getUserPermissionString(String user, String variable) {
         User auser = ph.getUser(user);
         if (auser == null) {
-            return null;
+            return "";
         }
-        Group start = auser.getGroup();
-        if (start == null) {
-            return null;
-        }
-        Group result = nextGroupWithVariable(start, variable, null);
-        if (result == null) {
-            return null;
-        }
-        return result.variables.getVarString(variable);
+        return auser.getVariables().getVarString(variable);
     }
 
     /**
@@ -245,15 +238,7 @@ public class AnjoPermissionsHandler extends Control {
         if (auser == null) {
             return -1;
         }
-        Group start = auser.getGroup();
-        if (start == null) {
-            return -1;
-        }
-        Group result = nextGroupWithVariable(start, variable, null);
-        if (result == null) {
-            return -1;
-        }
-        return result.variables.getVarInteger(variable);
+        return auser.getVariables().getVarInteger(variable);
     }
 
     /**
@@ -268,15 +253,7 @@ public class AnjoPermissionsHandler extends Control {
         if (auser == null) {
             return false;
         }
-        Group start = auser.getGroup();
-        if (start == null) {
-            return false;
-        }
-        Group result = nextGroupWithVariable(start, variable, null);
-        if (result == null) {
-            return false;
-        }
-        return result.variables.getVarBoolean(variable);
+        return auser.getVariables().getVarBoolean(variable);
     }
 
     /**
@@ -291,6 +268,51 @@ public class AnjoPermissionsHandler extends Control {
         if (auser == null) {
             return -1;
         }
+        return auser.getVariables().getVarDouble(variable);
+    }
+
+    /**
+     *
+     * @param string
+     * @param variable
+     * @return
+     */
+    @Override
+    public String getPermissionString(String user, String variable) {
+        User auser = ph.getUser(user);
+        if (auser == null) {
+            return "";
+        }
+        if(auser.getVariables().hasVar(variable)){
+            return auser.getVariables().getVarString(variable);
+        }
+        Group start = auser.getGroup();
+        if (start == null) {
+            return "";
+        }
+        Group result = nextGroupWithVariable(start, variable, null);
+        if (result == null) {
+            return "";
+        }
+        return result.getVariables().getVarString(variable);
+        //return getUserPermissionString(user, variable);
+    }
+
+    /**
+     *
+     * @param user
+     * @param variable
+     * @return
+     */
+    @Override
+    public int getPermissionInteger(String user, String variable) {
+        User auser = ph.getUser(user);
+        if (auser == null) {
+            return -1;
+        }
+        if(auser.getVariables().hasVar(variable)){
+            return auser.getVariables().getVarInteger(variable);
+        }
         Group start = auser.getGroup();
         if (start == null) {
             return -1;
@@ -299,51 +321,62 @@ public class AnjoPermissionsHandler extends Control {
         if (result == null) {
             return -1;
         }
-        return result.variables.getVarDouble(variable);
+        return result.getVariables().getVarInteger(variable);
+        //return getUserPermissionInteger(string, string1);
     }
 
     /**
      *
-     * @param string
+     * @param user
      * @param string1
      * @return
      */
     @Override
-    public String getPermissionString(String string, String string1) {
-        return getUserPermissionString(string, string1);
+    public boolean getPermissionBoolean(String user, String variable) {
+        User auser = ph.getUser(user);
+        if (auser == null) {
+            return false;
+        }
+        if(auser.getVariables().hasVar(variable)){
+            return auser.getVariables().getVarBoolean(variable);
+        }
+        Group start = auser.getGroup();
+        if (start == null) {
+            return false;
+        }
+        Group result = nextGroupWithVariable(start, variable, null);
+        if (result == null) {
+            return false;
+        }
+        return result.getVariables().getVarBoolean(variable);
+        //return getUserPermissionBoolean(user, string1);
     }
 
     /**
      *
-     * @param string
-     * @param string1
+     * @param user
+     * @param variable
      * @return
      */
     @Override
-    public int getPermissionInteger(String string, String string1) {
-        return getUserPermissionInteger(string, string1);
-    }
-
-    /**
-     *
-     * @param string
-     * @param string1
-     * @return
-     */
-    @Override
-    public boolean getPermissionBoolean(String string, String string1) {
-        return getUserPermissionBoolean(string, string1);
-    }
-
-    /**
-     *
-     * @param string
-     * @param string1
-     * @return
-     */
-    @Override
-    public double getPermissionDouble(String string, String string1) {
-        return getUserPermissionDouble(string, string1);
+    public double getPermissionDouble(String user, String variable) {
+        User auser = ph.getUser(user);
+        if (auser == null) {
+            return -1.0D;
+        }
+        if(auser.getVariables().hasVar(variable)){
+            return auser.getVariables().getVarDouble(variable);
+        }
+        Group start = auser.getGroup();
+        if (start == null) {
+            return -1.0D;
+        }
+        Group result = nextGroupWithVariable(start, variable, null);
+        if (result == null) {
+            return -1.0D;
+        }
+        return result.getVariables().getVarDouble(variable);
+        //return getUserPermissionDouble(string, string1);
     }
 
     /**
@@ -353,8 +386,12 @@ public class AnjoPermissionsHandler extends Control {
      * @return
      */
     public String checkUserOnlyPermission(User user, String permission) {
+        Collections.sort(user.permissions, new StringPermissionComparator());
         for (String access : user.permissions) {
             if (comparePermissionString(access, permission)) {
+                if(access.startsWith("-")){
+                    return null;
+                }
                 return access;
             }
         }
@@ -362,14 +399,19 @@ public class AnjoPermissionsHandler extends Control {
     }
 
     /**
-     * Does not include User's group permission
+     * Returns the node responsible for that permission.
+     * Does not include User's group permission.
      * @param user
      * @param permission
-     * @return
+     * @return the node if permission is found. if not found, return null
      */
     public String checkGroupOnlyPermission(Group group, String permission) {
+        Collections.sort(group.permissions, new StringPermissionComparator());
         for (String access : group.permissions) {
             if (comparePermissionString(access, permission)) {
+                if(access.startsWith("-")){
+                    return null;
+                }
                 return access;
             }
         }
@@ -412,7 +454,7 @@ public class AnjoPermissionsHandler extends Control {
         if (alreadyChecked.contains(start)) {
             return null;
         }
-        if (start.variables.hasVar(variable)) {
+        if (start.getVariables().hasVar(variable)) {
             return start;
         }
 
@@ -491,9 +533,13 @@ public class AnjoPermissionsHandler extends Control {
             return null;
         }
         //System.out.println("Testing permission inh group "+start.getName());
+        Collections.sort(start.permissions, new StringPermissionComparator());
         for (String availablePerm : start.permissions) {
             if (comparePermissionString(availablePerm, permission)) {
                 //System.out.println("WIN!");
+                if(availablePerm.startsWith("-")){
+                    return null;
+                }
                 return start;
             }
         }
@@ -543,14 +589,29 @@ public class AnjoPermissionsHandler extends Control {
      * Compare a user permission like 'myplugin.*' against a full plugin
      * permission name, like 'myplugin.dosomething'.
      * As the example above, will return true.
+     *
+     * Please sort permissions before sending them here. So negative tokens
+     * get priority.
+     *
+     * You must test if it start with negative after this, so you return
+     * the !result of this method.
+     * 
      * @param userAcessLevel
      * @param fullPermissionName
-     * @return
+     * @return true if found a matching token. false if not.
      */
     public boolean comparePermissionString(String userAcessLevel, String fullPermissionName) {
         if (userAcessLevel == null || fullPermissionName == null) {
             return false;
         }
+
+        if(userAcessLevel.startsWith("+")){
+            userAcessLevel = userAcessLevel.substring(1);
+        } else if(userAcessLevel.startsWith("-")){
+            userAcessLevel = userAcessLevel.substring(1);
+        }
+
+
         //System.out.println("Comparing acess "+userAcessLevel+" with "+fullPermissionName);
         StringTokenizer levelATokenizer = new StringTokenizer(userAcessLevel, ".");
         StringTokenizer levelBTokenizer = new StringTokenizer(fullPermissionName, ".");

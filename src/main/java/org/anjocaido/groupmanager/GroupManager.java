@@ -749,6 +749,131 @@ public class GroupManager extends JavaPlugin {
                     sender.sendMessage(ChatColor.RED + "Group  " + auxGroup2.getName() + " was removed from " + auxGroup.getName() + " inheritance list.");
 
                     return true;
+                case manuaddv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length < 3) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    //VALIDANDO PERMISSAO
+                    //PARECE OK
+                    auxString = "";
+                    for (int i = 2; i < args.length; i++) {
+                        auxString += args[i];
+                        if ((i + 1) < args.length) {
+                            auxString += " ";
+                        }
+                    }
+                    auxUser.getVariables().addVar(args[1], Variables.parseVariableValue(auxString));
+                    sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + ":'" + ChatColor.GREEN + auxString + ChatColor.YELLOW + "' added to the user " + auxUser.getName());
+                    return true;
+                case manudelv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!auxUser.getVariables().hasVar(args[1])) {
+                        sender.sendMessage(ChatColor.RED + "The user doesn't have directly that variable!");
+                    }
+                    //PARECE OK
+                    auxUser.getVariables().removeVar(args[1]);
+                    sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + " removed from the user " + ChatColor.GREEN + auxUser.getName());
+                    return true;
+                case manulistv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 1) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    //VALIDANDO PERMISSAO
+                    //PARECE OK
+                    auxString = "";
+                    for (String varKey : auxUser.getVariables().getVarKeyList()) {
+                        Object o = auxUser.getVariables().getVarObject(varKey);
+                        auxString += ChatColor.GOLD + varKey + ChatColor.WHITE + ":'" + ChatColor.GREEN + o.toString() + ChatColor.WHITE + "', ";
+                    }
+                    if (auxString.lastIndexOf(",") > 0) {
+                        auxString = auxString.substring(0, auxString.lastIndexOf(","));
+                    }
+                    sender.sendMessage(ChatColor.YELLOW + "Variables of user " + auxUser.getName() + ": ");
+                    sender.sendMessage(auxString + ".");
+                    sender.sendMessage(ChatColor.YELLOW + "Plus all variables from group: " + auxUser.getGroupName());
+                    return true;
+                case manucheckv:
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    //VALIDANDO PERMISSAO
+                    auxGroup = auxUser.getGroup();
+                    auxGroup2 = permissionHandler.nextGroupWithVariable(auxGroup, args[1], null);
+
+                    if (!auxUser.getVariables().hasVar(args[1])) {
+                        if (auxGroup2 == null) {
+                            sender.sendMessage(ChatColor.RED + "The user doesn't have access to that variable!");
+                        }
+                    }
+                    //PARECE OK
+                    if (auxUser.getVariables().hasVar(auxString)) {
+                        sender.sendMessage(ChatColor.YELLOW + "The value of variable '" + ChatColor.GOLD + args[1] + ChatColor.YELLOW + "' is: '" + ChatColor.GREEN + auxUser.getVariables().getVarObject(args[1]).toString() + ChatColor.WHITE + "'");
+                        sender.sendMessage(ChatColor.YELLOW + "This user own directly the variable");
+                    }
+                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '" + ChatColor.GOLD + args[1] + ChatColor.YELLOW + "' is: '" + ChatColor.GREEN + auxGroup2.getVariables().getVarObject(args[1]).toString() + ChatColor.WHITE + "'");
+                    if (!auxGroup.equals(auxGroup2)) {
+                        sender.sendMessage(ChatColor.YELLOW + "And the value was inherited from group: " + ChatColor.GREEN + auxGroup2.getName());
+                    }
+                    return true;
                 case mangaddv:
                     //VALIDANDO ARGUMENTOS
                     if (args.length < 3) {
@@ -769,7 +894,7 @@ public class GroupManager extends JavaPlugin {
                             auxString += " ";
                         }
                     }
-                    auxGroup.variables.addVar(args[1], Variables.parseVariableValue(auxString));
+                    auxGroup.getVariables().addVar(args[1], Variables.parseVariableValue(auxString));
                     sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + ":'" + ChatColor.GREEN + auxString + ChatColor.YELLOW + "' added to the group " + auxGroup.getName());
 
                     return true;
@@ -785,11 +910,11 @@ public class GroupManager extends JavaPlugin {
                         return false;
                     }
                     //VALIDANDO PERMISSAO
-                    if (!auxGroup.variables.hasVar(args[1])) {
+                    if (!auxGroup.getVariables().hasVar(args[1])) {
                         sender.sendMessage(ChatColor.RED + "The group doesn't have directly that variable!");
                     }
                     //PARECE OK
-                    auxGroup.variables.removeVar(args[1]);
+                    auxGroup.getVariables().removeVar(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "Variable " + ChatColor.GOLD + args[1] + ChatColor.YELLOW + " removed from the group " + ChatColor.GREEN + auxGroup.getName());
 
                     return true;
@@ -807,8 +932,8 @@ public class GroupManager extends JavaPlugin {
                     //VALIDANDO PERMISSAO
                     //PARECE OK
                     auxString = "";
-                    for (String varKey : auxGroup.variables.getVarKeyList()) {
-                        Object o = auxGroup.variables.getVarObject(varKey);
+                    for (String varKey : auxGroup.getVariables().getVarKeyList()) {
+                        Object o = auxGroup.getVariables().getVarObject(varKey);
                         auxString += ChatColor.GOLD + varKey + ChatColor.WHITE + ":'" + ChatColor.GREEN + o.toString() + ChatColor.WHITE + "', ";
                     }
                     if (auxString.lastIndexOf(",") > 0) {
@@ -842,7 +967,7 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "The group doesn't have access to that variable!");
                     }
                     //PARECE OK
-                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '" + ChatColor.GOLD + args[1] + ChatColor.YELLOW + "' is: '" + ChatColor.GREEN + auxGroup2.variables.getVarObject(args[1]).toString() + ChatColor.WHITE + "'");
+                    sender.sendMessage(ChatColor.YELLOW + "The value of variable '" + ChatColor.GOLD + args[1] + ChatColor.YELLOW + "' is: '" + ChatColor.GREEN + auxGroup2.getVariables().getVarObject(args[1]).toString() + ChatColor.WHITE + "'");
                     if (!auxGroup.equals(auxGroup2)) {
                         sender.sendMessage(ChatColor.YELLOW + "And the value was inherited from group: " + ChatColor.GREEN + auxGroup2.getName());
                     }

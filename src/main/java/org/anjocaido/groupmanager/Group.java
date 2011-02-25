@@ -29,7 +29,7 @@ public class Group implements Cloneable{
      * like prefix = 'c'
      * or build = false
      */
-    public Variables variables = new Variables();
+    private GroupVariables variables = new GroupVariables(this);
     /**
      * These are the complete name of the permissions nodes
      * like essentials.motd
@@ -47,9 +47,6 @@ public class Group implements Cloneable{
     protected Group(DataHolder source, String name) {
         this.source = source;
         this.name = name;
-        variables.addVar("prefix", "");
-        variables.addVar("suffix", "");
-        variables.addVar("build", false);
     }
 
     /**
@@ -94,7 +91,7 @@ public class Group implements Cloneable{
         Group clone = new Group(getDataSource(),name);
         clone.inherits = ((ArrayList<String>) this.getInherits().clone());
         clone.permissions = (ArrayList<String>) this.permissions.clone();
-        clone.variables = this.variables.clone();
+        clone.variables = ((GroupVariables)variables).clone(clone);
         return clone;
     }
     /**
@@ -109,7 +106,7 @@ public class Group implements Cloneable{
         Group clone = getDataSource().createGroup(name);
         clone.inherits = ((ArrayList<String>) this.getInherits().clone());
         clone.permissions = (ArrayList<String>) this.permissions.clone();
-        clone.variables = this.variables.clone();
+        clone.variables = variables.clone(clone);
         return clone;
     }
 
@@ -148,5 +145,19 @@ public class Group implements Cloneable{
      */
     public DataHolder getDataSource() {
         return source;
+    }
+
+    /**
+     * @return the variables
+     */
+    public GroupVariables getVariables() {
+        return variables;
+    }
+    /**
+     * 
+     * @param varList
+     */
+    public void setVariables(Map<String, Object> varList) {
+        variables = new GroupVariables(this,varList);
     }
 }

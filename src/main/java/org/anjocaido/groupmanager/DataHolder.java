@@ -199,7 +199,7 @@ public class DataHolder {
      * @return null if user already exists. or new User
      */
     public User createUser(String userName) {
-        if (this.groups.containsKey(userName.toLowerCase())) {
+        if (this.users.containsKey(userName.toLowerCase())) {
             return null;
         }
         User newUser = new User(this, userName);
@@ -270,14 +270,14 @@ public class DataHolder {
         DataHolder ph = new DataHolder();
         ph.f = file;
         final Yaml yaml = new Yaml(new SafeConstructor());
-        Map<String, Object> data1;
+        Map<String, Object> rootDataNode;
         if (!file.exists()) {
             throw new Exception("This server does not use Permissions.");
         }
         FileInputStream rx = new FileInputStream(file);
         try {
-            data1 = (Map<String, Object>) yaml.load(new UnicodeReader(rx));
-            if (data1 == null) {
+            rootDataNode = (Map<String, Object>) yaml.load(new UnicodeReader(rx));
+            if (rootDataNode == null) {
                 throw new NullPointerException();
             }
         } catch (Exception ex) {
@@ -287,33 +287,33 @@ public class DataHolder {
         }
         Map<String, List<String>> inheritance = new HashMap<String, List<String>>();
         try {
-            Map<String, Object> groupsNode = (Map<String, Object>) data1.get("groups");
-            for (String groupKey : groupsNode.keySet()) {
-                Map<String, Object> group = (Map<String, Object>) groupsNode.get(groupKey);
+            Map<String, Object> allGroupsNode = (Map<String, Object>) rootDataNode.get("groups");
+            for (String groupKey : allGroupsNode.keySet()) {
+                Map<String, Object> thisGroupNode = (Map<String, Object>) allGroupsNode.get(groupKey);
                 Group thisGrp = ph.createGroup(groupKey);
-                if (group.get("default") == null) {
-                    group.put("default", false);
+                if (thisGroupNode.get("default") == null) {
+                    thisGroupNode.put("default", false);
                 }
-                if ((Boolean.parseBoolean(group.get("default").toString()))) {
+                if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
                     ph.setDefaultGroup(thisGrp);
                 }
 
                 //PERMISSIONS NODE
-                if (group.get("permissions") == null) {
-                    group.put("permissions", new ArrayList<String>());
+                if (thisGroupNode.get("permissions") == null) {
+                    thisGroupNode.put("permissions", new ArrayList<String>());
                 }
-                if (group.get("permissions") instanceof List) {
-                    for (Object o : ((List) group.get("permissions"))) {
+                if (thisGroupNode.get("permissions") instanceof List) {
+                    for (Object o : ((List) thisGroupNode.get("permissions"))) {
                         thisGrp.permissions.add(o.toString());
                     }
-                } else if (group.get("permissions") instanceof String) {
-                    thisGrp.permissions.add((String) group.get("permissions"));
+                } else if (thisGroupNode.get("permissions") instanceof String) {
+                    thisGrp.permissions.add((String) thisGroupNode.get("permissions"));
                 } else {
-                    throw new Exception("Unknown type of permissions node(Should be String or List<String>): " + group.get("permissions").getClass().getName());
+                    throw new Exception("Unknown type of permissions node(Should be String or List<String>): " + thisGroupNode.get("permissions").getClass().getName());
                 }
 
                 //INFO NODE
-                Map<String, Object> infoNode = (Map<String, Object>) group.get("info");
+                Map<String, Object> infoNode = (Map<String, Object>) thisGroupNode.get("info");
                 if (infoNode == null) {
                     infoNode = new HashMap<String, Object>();
                 }
@@ -331,21 +331,21 @@ public class DataHolder {
                     infoNode.put("build", false);
                 }
                 //thisGrp.canbuild = Boolean.parseBoolean(infoNode.get("build").toString());
-                thisGrp.variables = new Variables(infoNode);
+                thisGrp.setVariables(infoNode);
 
-                Object inheritNode = group.get("inheritance");
+                Object inheritNode = thisGroupNode.get("inheritance");
                 if (inheritNode == null) {
-                    group.put("inheritance", new ArrayList<String>());
+                    thisGroupNode.put("inheritance", new ArrayList<String>());
                 } else if (inheritNode instanceof List) {
                     List<String> groupsInh = (List<String>) inheritNode;
                     for (String grp : groupsInh) {
-                        if(inheritance.get(groupKey)==null){
+                        if (inheritance.get(groupKey) == null) {
                             List<String> thisInherits = new ArrayList<String>();
                             inheritance.put(groupKey, thisInherits);
                         }
                         inheritance.get(groupKey).add(grp);
                         //System.out.println("Found inheritance "+grp+" for group"+groupKey);
-                        
+
                     }
                 }
             }
@@ -356,9 +356,9 @@ public class DataHolder {
         for (String groupKey : inheritance.keySet()) {
             List<String> inheritedList = inheritance.get(groupKey);
             Group thisGroup = ph.getGroup(groupKey);
-            for(String inheritedKey: inheritedList){
+            for (String inheritedKey : inheritedList) {
                 Group inheritedGroup = ph.getGroup(inheritedKey);
-                if(thisGroup!=null && inheritedGroup!=null){
+                if (thisGroup != null && inheritedGroup != null) {
                     thisGroup.addInherits(inheritedGroup);
                     //System.out.println("Adding inheritance "+groupKey+" for group "+inheritedKey);
                 }
@@ -366,23 +366,40 @@ public class DataHolder {
             //System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
         }
         // Process USERS
-        Map<String, Object> usersNode = (Map<String, Object>) data1.get("users");
-        for (String usersKey : usersNode.keySet()) {
-            Map<String, Object> node = (Map<String, Object>) usersNode.get(usersKey);
+        Map<String, Object> allUsersNode = (Map<String, Object>) rootDataNode.get("users");
+        for (String usersKey : allUsersNode.keySet()) {
+            Map<String, Object> thisUserNode = (Map<String, Object>) allUsersNode.get(usersKey);
             User thisUser = ph.createUser(usersKey);
-            if (node.get("permissions") == null) {
-                node.put("permissions", new ArrayList<String>());
+            if (thisUser == null) {
+                throw new IllegalStateException("I think this user was declared more than once " + usersKey);
             }
-            if (node.get("permissions") instanceof List) {
-                for (Object o : ((List) node.get("permissions"))) {
+            if (thisUserNode.get("permissions") == null) {
+                thisUserNode.put("permissions", new ArrayList<String>());
+            }
+            if (thisUserNode.get("permissions") instanceof List) {
+                for (Object o : ((List) thisUserNode.get("permissions"))) {
                     thisUser.permissions.add(o.toString());
                 }
-            } else if (node.get("permissions") instanceof String) {
-                thisUser.permissions.add(node.get("permissions").toString());
+            } else if (thisUserNode.get("permissions") instanceof String) {
+                thisUser.permissions.add(thisUserNode.get("permissions").toString());
             }
 
-            if (node.get("group") != null && ph.getGroup(node.get("group").toString()) != null) {
-                thisUser.setGroup(ph.getGroup(node.get("group").toString()));
+
+            //USER INFO NODE - BETA
+
+            //INFO NODE
+            Map<String, Object> infoNode = (Map<String, Object>) thisUserNode.get("info");
+            if (infoNode != null) {
+                thisUser.setVariables(infoNode);
+            }
+            //END INFO NODE - BETA
+
+            if (thisUserNode.get("group") != null) {
+                Group hisGroup = ph.getGroup(thisUserNode.get("group").toString());
+                if (hisGroup == null) {
+                    throw new IllegalArgumentException("There is no group " + thisUserNode.get("group").toString() + ", as stated for player " + thisUser.getName());
+                }
+                thisUser.setGroup(hisGroup);
             } else {
                 thisUser.setGroup(ph.defaultGroup);
             }
@@ -419,15 +436,9 @@ public class DataHolder {
             Map<String, Object> infoMap = new HashMap<String, Object>();
             aGroupMap.put("info", infoMap);
 
-            for (String infoKey : group.variables.getVarKeyList()) {
-                infoMap.put(infoKey, group.variables.getVarObject(infoKey));
+            for (String infoKey : group.getVariables().getVarKeyList()) {
+                infoMap.put(infoKey, group.getVariables().getVarObject(infoKey));
             }
-
-            //infoMap.put("prefix", group.prefix);
-
-            //infoMap.put("suffix", group.suffix);
-
-            //infoMap.put("build", group.canbuild);
 
             aGroupMap.put("inheritance", group.getInherits());
 
@@ -450,6 +461,16 @@ public class DataHolder {
             } else {
                 aUserMap.put("group", user.getGroup().getName());
             }
+            //USER INFO NODE - BETA
+            if (user.getVariables().getSize() > 0) {
+                Map<String, Object> infoMap = new HashMap<String, Object>();
+                aUserMap.put("info", infoMap);
+
+                for (String infoKey : user.getVariables().getVarKeyList()) {
+                    infoMap.put(infoKey, user.getVariables().getVarObject(infoKey));
+                }
+            }
+            //END USER INFO NODE - BETA
 
             aUserMap.put("permissions", user.permissions);
         }

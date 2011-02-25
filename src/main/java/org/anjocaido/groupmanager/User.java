@@ -6,6 +6,7 @@
 package org.anjocaido.groupmanager;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  *
@@ -18,10 +19,17 @@ public class User implements Cloneable {
      *
      */
     private String group = null;
+
+    /**
+     *This one holds the fields in INFO node.
+     * like prefix = 'c'
+     * or build = false
+     */
+    private UserVariables variables = new UserVariables(this);
+
     /**
      *
      */
-    //public Variables variables = new Variables();//NOT IMPLEMENTED YET, DO ON IT'S GROUP!
     public ArrayList<String> permissions = new ArrayList<String>();
     /**
      *
@@ -129,5 +137,18 @@ public class User implements Cloneable {
      */
     public DataHolder getDataSource() {
         return source;
+    }
+    /**
+     * @return the variables
+     */
+    public UserVariables getVariables() {
+        return variables;
+    }
+    /**
+     *
+     * @param varList
+     */
+    public void setVariables(Map<String, Object> varList) {
+        variables = new UserVariables(this,varList);
     }
 }

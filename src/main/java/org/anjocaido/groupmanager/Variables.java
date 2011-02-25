@@ -18,24 +18,9 @@ import java.util.Set;
  *
  * @author gabrielcouto
  */
-public class Variables implements Cloneable {
+public abstract class Variables implements Cloneable {
 
-    private Map<String, Object> variables = new HashMap<String, Object>();
-
-    /**
-     *
-     */
-    public Variables() {
-        variables = new HashMap<String, Object>();
-    }
-
-    /**
-     *
-     * @param varList
-     */
-    public Variables(Map<String, Object> varList) {
-        variables = varList;
-    }
+    protected Map<String, Object> variables = new HashMap<String, Object>();
 
     /**
      * Add var to the the INFO node.
@@ -46,7 +31,7 @@ public class Variables implements Cloneable {
      * @param o the object value of the var
      */
     public void addVar(String name, Object o) {
-        if(o==null){
+        if (o == null) {
             return;
         }
         if (variables.containsKey(name)) {
@@ -71,7 +56,11 @@ public class Variables implements Cloneable {
      */
     public String getVarString(String name) {
         Object o = variables.get(name);
-        return o == null ? "" : o.toString();
+        try {
+            return o == null ? "" : o.toString();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /**
@@ -81,7 +70,11 @@ public class Variables implements Cloneable {
      */
     public Boolean getVarBoolean(String name) {
         Object o = variables.get(name);
-        return o == null ? false : Boolean.parseBoolean(o.toString());
+        try {
+            return o == null ? false : Boolean.parseBoolean(o.toString());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -91,7 +84,11 @@ public class Variables implements Cloneable {
      */
     public Integer getVarInteger(String name) {
         Object o = variables.get(name);
-        return o == null ? -1 : Integer.parseInt(o.toString());
+        try {
+            return o == null ? -1 : Integer.parseInt(o.toString());
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     /**
@@ -101,7 +98,13 @@ public class Variables implements Cloneable {
      */
     public Double getVarDouble(String name) {
         Object o = variables.get(name);
-        return o == null ? -1 : Double.parseDouble(o.toString());
+        try {
+            return o == null ? -1.0D : Double.parseDouble(o.toString());
+        } catch (Exception e) {
+            return -1.0D;
+
+
+        }
     }
 
     /**
@@ -110,6 +113,8 @@ public class Variables implements Cloneable {
      */
     public Set<String> getVarKeyList() {
         return variables.keySet();
+
+
     }
 
     /**
@@ -119,14 +124,18 @@ public class Variables implements Cloneable {
      */
     public boolean hasVar(String name) {
         return variables.containsKey(name);
+
+
     }
 
     /**
      * Returns the quantity of vars this is holding
      * @return the number of vars
      */
-    public int getVarSize() {
+    public int getSize() {
         return variables.size();
+
+
     }
 
     /**
@@ -136,28 +145,10 @@ public class Variables implements Cloneable {
     public void removeVar(String name) {
         try {
             variables.remove(name);
+
+
         } catch (Exception e) {
         }
-        if(name.equals("prefix")){
-            addVar("prefix", "");
-        } else if(name.equals("suffix")){
-            addVar("suffix", "");
-        } else if(name.equals("build")){
-            addVar("build", false);
-        }
-    }
-
-    /**
-     *  A clone of all vars here.
-     * @return
-     */
-    @Override
-    public Variables clone() {
-        Variables clone = new Variables();
-        for (String key : this.variables.keySet()) {
-            clone.variables.put(key, this.variables.get(key));
-        }
-        return clone;
     }
 
     public static Object parseVariableValue(String value) {
@@ -177,5 +168,6 @@ public class Variables implements Cloneable {
             return false;
         }
         return value;
+
     }
 }
