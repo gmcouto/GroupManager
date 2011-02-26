@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.anjocaido.groupmanager;
+package org.anjocaido.groupmanager.dataholder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.anjocaido.groupmanager.data.Group;
+import org.anjocaido.groupmanager.data.User;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -57,7 +59,7 @@ public class DataHolder {
      * @param defaultGroup the default group. its good to start with one
      */
     public DataHolder(Group defaultGroup) {
-        groups.put(defaultGroup.getName(), defaultGroup);
+        groups.put(defaultGroup.getName().toLowerCase(), defaultGroup);
         this.defaultGroup = defaultGroup;
     }
 
@@ -87,8 +89,15 @@ public class DataHolder {
         if (theUser == null) {
             return;
         }
-        if ((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroup()))) {
-            theUser.setGroup(defaultGroup);
+        if ((theUser.getGroup() == null)) {
+            if (theUser.getGroup().getDataSource() != this) {
+                if (groupExists(theUser.getGroupName())) {
+                    theUser.setGroup(getGroup(theUser.getGroupName()));
+                } else {
+                    this.addGroup(theUser.getGroup());
+                    theUser.setGroup(getGroup(theUser.getGroupName()));
+                }
+            }
         }
         removeUser(theUser.getName());
         users.put(theUser.getName(), theUser);
@@ -107,12 +116,16 @@ public class DataHolder {
         return false;
     }
 
+    public boolean isUserDeclared(String userName) {
+        return users.containsKey(userName.toLowerCase());
+    }
+
     /**
      *  Change the default group of the file.
      * @param group the group you want make default.
      */
     public void setDefaultGroup(Group group) {
-        if (!groups.containsKey(group.getName()) || (group.getDataSource() != this)) {
+        if (!groups.containsKey(group.getName().toLowerCase()) || (group.getDataSource() != this)) {
             addGroup(group);
         }
         defaultGroup = this.getGroup(group.getName());
@@ -132,12 +145,7 @@ public class DataHolder {
      * @return a group if it is found. null if not found.
      */
     public Group getGroup(String groupName) {
-        for (String key : groups.keySet()) {
-            if (groupName.equalsIgnoreCase(key)) {
-                return groups.get(key);
-            }
-        }
-        return null;
+        return groups.get(groupName.toLowerCase());
     }
 
     /**
@@ -147,12 +155,7 @@ public class DataHolder {
      * @return true if exists. false if not.
      */
     public boolean groupExists(String groupName) {
-        for (String key : groups.keySet()) {
-            if (groupName.equalsIgnoreCase(key)) {
-                return true;
-            }
-        }
-        return false;
+        return groups.containsKey(groupName.toLowerCase());
     }
 
     /**
@@ -164,7 +167,7 @@ public class DataHolder {
             groupToAdd = groupToAdd.clone(this);
         }
         removeGroup(groupToAdd.getName());
-        groups.put(groupToAdd.getName(), groupToAdd);
+        groups.put(groupToAdd.getName().toLowerCase(), groupToAdd);
     }
 
     /**
@@ -173,20 +176,11 @@ public class DataHolder {
      * @return true if had something to remove. false the group was default or non-existant
      */
     public boolean removeGroup(String groupName) {
-        if (groupName.equals(defaultGroup)) {
+        if (defaultGroup != null && groupName.equalsIgnoreCase(defaultGroup.getName())) {
             return false;
         }
-        for (String key : groups.keySet()) {
-            if (groupName.equalsIgnoreCase(key)) {
-                groups.remove(key);
-                for (String userKey : users.keySet()) {
-                    User user = users.get(userKey);
-                    if (user.getGroupName().equalsIgnoreCase(key)) {
-                        user.setGroup(defaultGroup);
-                    }
-                }
-                return true;
-            }
+        if (groups.containsKey(groupName.toLowerCase())) {
+            return true;
         }
         return false;
 
@@ -215,7 +209,7 @@ public class DataHolder {
      * @return null if group already exists. or new Group
      */
     public Group createGroup(String groupName) {
-        if (this.groups.containsKey(groupName)) {
+        if (this.groups.containsKey(groupName.toLowerCase())) {
             return null;
         }
         Group newGroup = new Group(this, groupName);
@@ -272,7 +266,7 @@ public class DataHolder {
         final Yaml yaml = new Yaml(new SafeConstructor());
         Map<String, Object> rootDataNode;
         if (!file.exists()) {
-            throw new Exception("This server does not use Permissions.");
+            throw new Exception("The file which should contain permissions does not exist!\n" + file.getPath());
         }
         FileInputStream rx = new FileInputStream(file);
         try {
@@ -281,7 +275,7 @@ public class DataHolder {
                 throw new NullPointerException();
             }
         } catch (Exception ex) {
-            throw new Exception("This server does not have Permissions configured properly.", ex);
+            throw new Exception("The following file couldn't pass on Parser.\n" + file.getPath(), ex);
         } finally {
             rx.close();
         }
@@ -291,10 +285,17 @@ public class DataHolder {
             for (String groupKey : allGroupsNode.keySet()) {
                 Map<String, Object> thisGroupNode = (Map<String, Object>) allGroupsNode.get(groupKey);
                 Group thisGrp = ph.createGroup(groupKey);
+                if (thisGrp == null) {
+                    throw new IllegalArgumentException("I think this user was declared more than once: " + groupKey);
+                }
                 if (thisGroupNode.get("default") == null) {
                     thisGroupNode.put("default", false);
                 }
                 if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
+                    if(ph.getDefaultGroup()!=null){
+                        System.out.println("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
+                        System.out.println("Overriding first request.");
+                    }
                     ph.setDefaultGroup(thisGrp);
                 }
 
@@ -309,15 +310,15 @@ public class DataHolder {
                 } else if (thisGroupNode.get("permissions") instanceof String) {
                     thisGrp.permissions.add((String) thisGroupNode.get("permissions"));
                 } else {
-                    throw new Exception("Unknown type of permissions node(Should be String or List<String>): " + thisGroupNode.get("permissions").getClass().getName());
+                    throw new IllegalArgumentException("Unknown type of permissions node(Should be String or List<String>): " + thisGroupNode.get("permissions").getClass().getName());
                 }
 
                 //INFO NODE
                 Map<String, Object> infoNode = (Map<String, Object>) thisGroupNode.get("info");
-                if (infoNode != null){
+                if (infoNode != null) {
                     thisGrp.setVariables(infoNode);
                 }
-                
+
                 //END INFO NODE
 
                 Object inheritNode = thisGroupNode.get("inheritance");
@@ -340,6 +341,9 @@ public class DataHolder {
             ex.printStackTrace();
             throw new Exception("Your Permissions config file is invalid.  See console for details.");
         }
+        if (ph.defaultGroup == null) {
+            throw new IllegalArgumentException("There was no Default Group declared.");
+        }
         for (String groupKey : inheritance.keySet()) {
             List<String> inheritedList = inheritance.get(groupKey);
             Group thisGroup = ph.getGroup(groupKey);
@@ -358,7 +362,7 @@ public class DataHolder {
             Map<String, Object> thisUserNode = (Map<String, Object>) allUsersNode.get(usersKey);
             User thisUser = ph.createUser(usersKey);
             if (thisUser == null) {
-                throw new IllegalStateException("I think this user was declared more than once " + usersKey);
+                throw new IllegalArgumentException("I think this user was declared more than once: " + usersKey);
             }
             if (thisUserNode.get("permissions") == null) {
                 thisUserNode.put("permissions", new ArrayList<String>());

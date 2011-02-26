@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.anjocaido.groupmanager;
+package org.anjocaido.groupmanager.data;
 
+import org.anjocaido.groupmanager.dataholder.DataHolder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,9 +17,9 @@ import java.util.Set;
  *
  * @author gabrielcouto
  */
-public class Group implements Cloneable{
-    private DataHolder source;
+public class Group implements Cloneable {
 
+    private DataHolder source;
     private String name;
     /**
      * The group it inherits DIRECTLY!
@@ -38,13 +39,11 @@ public class Group implements Cloneable{
      */
     public ArrayList<String> permissions = new ArrayList<String>();
 
-
-
     /**
      *
      * @param name
      */
-    protected Group(DataHolder source, String name) {
+    public Group(DataHolder source, String name) {
         this.source = source;
         this.name = name;
     }
@@ -65,7 +64,7 @@ public class Group implements Cloneable{
     public boolean equals(Object o) {
         if (o instanceof Group) {
             Group go = (Group) o;
-            if (this.getName().equalsIgnoreCase(go.getName()) && this.getDataSource()==go.getDataSource()) {
+            if (this.getName().equalsIgnoreCase(go.getName()) && this.getDataSource() == go.getDataSource()) {
                 return true;
             }
         }
@@ -82,25 +81,27 @@ public class Group implements Cloneable{
         hash = 83 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
+
     /**
      *  Clone this group
      * @return a clone of this group
      */
     @Override
-    public Group clone(){
-        Group clone = new Group(getDataSource(),name);
+    public Group clone() {
+        Group clone = new Group(getDataSource(), name);
         clone.inherits = ((ArrayList<String>) this.getInherits().clone());
         clone.permissions = (ArrayList<String>) this.permissions.clone();
-        clone.variables = ((GroupVariables)variables).clone(clone);
+        clone.variables = ((GroupVariables) variables).clone(clone);
         return clone;
     }
+
     /**
      * Use this to deliver a group from a different dataSource to another
      * @param dataSource
      * @return
      */
-    public Group clone(DataHolder dataSource){
-        if(dataSource.groups.containsKey(name)){
+    public Group clone(DataHolder dataSource) {
+        if (dataSource.groupExists(name)) {
             return null;
         }
         Group clone = getDataSource().createGroup(name);
@@ -125,16 +126,17 @@ public class Group implements Cloneable{
      */
     public void addInherits(Group inherit) {
         //System.out.println("Adding inheritance:" + inherit.getName()+ "for "+ this.getName());
-        if(!source.groups.containsKey(inherit)){
+        if (!source.groupExists(inherit.getName())) {
             getDataSource().addGroup(inherit);
         }
-        if(!inherits.contains(inherit.getName())){
-            inherits.add(inherit.getName());
+        if (!inherits.contains(inherit.getName().toLowerCase())) {
+            inherits.add(inherit.getName().toLowerCase());
         }
     }
-    public boolean removeInherits(String inherit){
-        if(this.inherits.contains(inherit)){
-            this.inherits.remove(inherit);
+
+    public boolean removeInherits(String inherit) {
+        if (this.inherits.contains(inherit.toLowerCase())) {
+            this.inherits.remove(inherit.toLowerCase());
             return true;
         }
         return false;
@@ -153,11 +155,12 @@ public class Group implements Cloneable{
     public GroupVariables getVariables() {
         return variables;
     }
+
     /**
      * 
      * @param varList
      */
     public void setVariables(Map<String, Object> varList) {
-        variables = new GroupVariables(this,varList);
+        variables = new GroupVariables(this, varList);
     }
 }

@@ -3,8 +3,9 @@
  * and open the template in the editor.
  */
 
-package org.anjocaido.groupmanager;
+package org.anjocaido.groupmanager.data;
 
+import org.anjocaido.groupmanager.data.User;
 import java.util.Map;
 
 /**

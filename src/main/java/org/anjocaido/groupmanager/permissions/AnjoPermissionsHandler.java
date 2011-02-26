@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.anjocaido.groupmanager;
+package org.anjocaido.groupmanager.permissions;
 
+import org.anjocaido.groupmanager.utils.StringPermissionComparator;
 import com.nijiko.permissions.Control;
 import com.nijiko.permissions.PermissionHandler;
 import java.util.ArrayList;
@@ -13,9 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
-import org.anjocaido.groupmanager.Group;
-import org.anjocaido.groupmanager.DataHolder;
-import org.anjocaido.groupmanager.User;
+import org.anjocaido.groupmanager.data.Group;
+import org.anjocaido.groupmanager.dataholder.DataHolder;
+import org.anjocaido.groupmanager.data.User;
 import org.bukkit.entity.Player;
 
 /**

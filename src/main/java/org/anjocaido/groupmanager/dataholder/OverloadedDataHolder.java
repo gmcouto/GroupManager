@@ -2,12 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.anjocaido.groupmanager;
+package org.anjocaido.groupmanager.dataholder;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.anjocaido.groupmanager.data.User;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -64,7 +65,7 @@ public class OverloadedDataHolder extends DataHolder {
         if (theUser == null) {
             return;
         }
-        if ((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroupName()))) {
+        if ((theUser.getGroup() == null) || (!groups.containsKey(theUser.getGroupName().toLowerCase()))) {
             theUser.setGroup(defaultGroup);
         }
         //OVERLOADED CODE
