@@ -216,6 +216,15 @@ public class GroupManager extends JavaPlugin {
     private void doBackup() {
         System.out.println(this.getDescription().getName() + " - Backing up your data...");
         File backup = new File(backupFolder, "bkpperm" + System.currentTimeMillis() + ".yml");
+        long oldTime = System.currentTimeMillis() - 86400000L;
+        for (File olds : backupFolder.listFiles()) {
+            if (olds.lastModified() < oldTime) {
+                try {
+                    olds.delete();
+                } catch (Exception e) {
+                }
+            }
+        }
         if (backup.exists() && backup.isFile()) {
             backup.delete();
         }

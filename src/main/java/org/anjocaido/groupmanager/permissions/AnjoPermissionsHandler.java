@@ -565,17 +565,17 @@ public class AnjoPermissionsHandler extends Control {
      * @param alreadyChecked
      * @return the group that passed on test. null if no group passed.
      */
-    public ArrayList<Group> listAllGroupsInherited(Group start, ArrayList<Group> alreadyChecked) {
+    public ArrayList<String> listAllGroupsInherited(Group start, ArrayList<String> alreadyChecked) {
         if (start == null) {
             return null;
         }
         if (alreadyChecked == null) {
-            alreadyChecked = new ArrayList<Group>();
+            alreadyChecked = new ArrayList<String>();
         }
-        if (alreadyChecked.contains(start)) {
+        if (alreadyChecked.contains(start.getName())) {
             return alreadyChecked;
         }
-        alreadyChecked.add(start);
+        alreadyChecked.add(start.getName());
         for (String grp : start.getInherits()) {
             Group g = ph.getGroup(grp);
             if (g != null) {
@@ -643,7 +643,7 @@ public class AnjoPermissionsHandler extends Control {
 
     @Override
     public String[] getGroups(String userName) {
-        ArrayList<Group> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
+        ArrayList<String> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
         String[] arr = new String[listAllGroupsInherited.size()];
         return listAllGroupsInherited.toArray(arr);
     }

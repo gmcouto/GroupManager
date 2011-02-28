@@ -20,6 +20,7 @@ import org.anjocaido.groupmanager.data.User;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.reader.UnicodeReader;
@@ -465,7 +466,10 @@ public class DataHolder {
 
             aUserMap.put("permissions", user.permissions);
         }
-        final Yaml yaml = new Yaml(new SafeConstructor());
+        DumperOptions opt = new DumperOptions();
+        opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        final Yaml yaml = new Yaml(opt);
+        
         FileWriter tx = null;
         try {
             tx = new FileWriter(file, false);
