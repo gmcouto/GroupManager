@@ -6,6 +6,7 @@ package org.anjocaido.groupmanager.dataholder;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.anjocaido.groupmanager.GroupManager;
 import org.anjocaido.groupmanager.data.Group;
 import org.anjocaido.groupmanager.data.User;
+import org.anjocaido.groupmanager.permissions.AnjoPermissionsHandler;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -29,7 +32,9 @@ import org.yaml.snakeyaml.reader.UnicodeReader;
  *
  * @author gabrielcouto
  */
-public class DataHolder {
+public class WorldDataHolder {
+
+    protected String name;
 
     /**
      *  The actual groups holder
@@ -46,20 +51,30 @@ public class DataHolder {
     /**
      * The file, which this class loads/save data from/to
      */
+    @Deprecated
     protected File f;
+
+    protected AnjoPermissionsHandler permissionsHandler;
+    protected File usersFile;
+    protected File groupsFile;
+
+    protected boolean haveUsersChanged = false;
+    protected boolean haveGroupsChanged = false;
 
     /**
      *  Prevent direct instantiation
      */
-    protected DataHolder() {
+    protected WorldDataHolder(String worldName) {
+        name = worldName;
     }
 
     /**
-     * The main constructor for a new DataHolder
+     * The main constructor for a new WorldDataHolder
      *  Please don't set the default group as null
      * @param defaultGroup the default group. its good to start with one
      */
-    public DataHolder(Group defaultGroup) {
+    public WorldDataHolder(String worldName, Group defaultGroup) {
+        this.name = worldName;
         groups.put(defaultGroup.getName().toLowerCase(), defaultGroup);
         this.defaultGroup = defaultGroup;
     }
@@ -91,17 +106,11 @@ public class DataHolder {
             return;
         }
         if ((theUser.getGroup() == null)) {
-            if (theUser.getGroup().getDataSource() != this) {
-                if (groupExists(theUser.getGroupName())) {
-                    theUser.setGroup(getGroup(theUser.getGroupName()));
-                } else {
-                    this.addGroup(theUser.getGroup());
-                    theUser.setGroup(getGroup(theUser.getGroupName()));
-                }
-            }
+            theUser.setGroup(defaultGroup);
         }
         removeUser(theUser.getName());
-        users.put(theUser.getName(), theUser);
+        users.put(theUser.getName().toLowerCase(), theUser);
+        haveUsersChanged = true;
     }
 
     /**
@@ -112,6 +121,7 @@ public class DataHolder {
     public boolean removeUser(String userName) {
         if (users.containsKey(userName.toLowerCase())) {
             users.remove(userName.toLowerCase());
+            haveUsersChanged = true;
             return true;
         }
         return false;
@@ -130,6 +140,7 @@ public class DataHolder {
             addGroup(group);
         }
         defaultGroup = this.getGroup(group.getName());
+        haveGroupsChanged = true;
     }
 
     /**
@@ -169,6 +180,7 @@ public class DataHolder {
         }
         removeGroup(groupToAdd.getName());
         groups.put(groupToAdd.getName().toLowerCase(), groupToAdd);
+        haveGroupsChanged = true;
     }
 
     /**
@@ -181,6 +193,8 @@ public class DataHolder {
             return false;
         }
         if (groups.containsKey(groupName.toLowerCase())) {
+            groups.remove(groupName.toLowerCase());
+            haveGroupsChanged = true;
             return true;
         }
         return false;
@@ -200,6 +214,7 @@ public class DataHolder {
         User newUser = new User(this, userName);
         newUser.setGroup(defaultGroup);
         this.addUser(newUser);
+        haveUsersChanged = true;
         return newUser;
     }
 
@@ -215,6 +230,7 @@ public class DataHolder {
         }
         Group newGroup = new Group(this, groupName);
         this.addGroup(newGroup);
+        haveGroupsChanged = true;
         return newGroup;
     }
 
@@ -239,20 +255,22 @@ public class DataHolder {
      */
     public void reload() {
         try {
-            DataHolder ph = load(f);
+            WorldDataHolder ph = load(this.getName(), getGroupsFile(), getUsersFile());
             this.defaultGroup = ph.defaultGroup;
             this.groups = ph.groups;
             this.users = ph.users;
         } catch (Exception ex) {
-            Logger.getLogger(DataHolder.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(WorldDataHolder.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     /**
-     *  save to the file
+     * Save by yourself!
      */
+    @Deprecated
     public void commit() {
-        write(this, f);
+        writeGroups(this, getGroupsFile());
+        writeUsers(this, getUsersFile());
     }
 
     /**
@@ -261,8 +279,9 @@ public class DataHolder {
      * @return
      * @throws Exception
      */
-    public static DataHolder load(File file) throws Exception {
-        DataHolder ph = new DataHolder();
+    @Deprecated
+    public static WorldDataHolder load(String worldName, File file) throws Exception {
+        WorldDataHolder ph = new WorldDataHolder(worldName);
         ph.f = file;
         final Yaml yaml = new Yaml(new SafeConstructor());
         Map<String, Object> rootDataNode;
@@ -293,9 +312,9 @@ public class DataHolder {
                     thisGroupNode.put("default", false);
                 }
                 if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
-                    if(ph.getDefaultGroup()!=null){
-                        System.out.println("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
-                        System.out.println("Overriding first request.");
+                    if(ph.getDefaultGroup()!=null) {
+                        GroupManager.logger.warning("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
+                        GroupManager.logger.warning("Overriding first request.");
                     }
                     ph.setDefaultGroup(thisGrp);
                 }
@@ -306,10 +325,10 @@ public class DataHolder {
                 }
                 if (thisGroupNode.get("permissions") instanceof List) {
                     for (Object o : ((List) thisGroupNode.get("permissions"))) {
-                        thisGrp.permissions.add(o.toString());
+                        thisGrp.addPermission(o.toString());
                     }
                 } else if (thisGroupNode.get("permissions") instanceof String) {
-                    thisGrp.permissions.add((String) thisGroupNode.get("permissions"));
+                    thisGrp.addPermission((String) thisGroupNode.get("permissions"));
                 } else {
                     throw new IllegalArgumentException("Unknown type of permissions node(Should be String or List<String>): " + thisGroupNode.get("permissions").getClass().getName());
                 }
@@ -333,7 +352,6 @@ public class DataHolder {
                             inheritance.put(groupKey, thisInherits);
                         }
                         inheritance.get(groupKey).add(grp);
-                        //System.out.println("Found inheritance "+grp+" for group"+groupKey);
 
                     }
                 }
@@ -352,10 +370,8 @@ public class DataHolder {
                 Group inheritedGroup = ph.getGroup(inheritedKey);
                 if (thisGroup != null && inheritedGroup != null) {
                     thisGroup.addInherits(inheritedGroup);
-                    //System.out.println("Adding inheritance "+groupKey+" for group "+inheritedKey);
                 }
             }
-            //System.out.println("Inserting inheritance "+inherited+" for group"+groupKey);
         }
         // Process USERS
         Map<String, Object> allUsersNode = (Map<String, Object>) rootDataNode.get("users");
@@ -370,10 +386,178 @@ public class DataHolder {
             }
             if (thisUserNode.get("permissions") instanceof List) {
                 for (Object o : ((List) thisUserNode.get("permissions"))) {
-                    thisUser.permissions.add(o.toString());
+                    thisUser.addPermission(o.toString());
                 }
             } else if (thisUserNode.get("permissions") instanceof String) {
-                thisUser.permissions.add(thisUserNode.get("permissions").toString());
+                thisUser.addPermission(thisUserNode.get("permissions").toString());
+            }
+
+
+            //USER INFO NODE - BETA
+
+            //INFO NODE
+            Map<String, Object> infoNode = (Map<String, Object>) thisUserNode.get("info");
+            if (infoNode != null) {
+                thisUser.setVariables(infoNode);
+            }
+            //END INFO NODE - BETA
+
+            if (thisUserNode.get("group") != null) {
+                Group hisGroup = ph.getGroup(thisUserNode.get("group").toString());
+                if (hisGroup == null) {
+                    throw new IllegalArgumentException("There is no group " + thisUserNode.get("group").toString() + ", as stated for player " + thisUser.getName());
+                }
+                thisUser.setGroup(hisGroup);
+            } else {
+                thisUser.setGroup(ph.defaultGroup);
+            }
+        }
+        return ph;
+    }
+
+
+    /**
+     *  Returns a data holder for the given file
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    public static WorldDataHolder load(String worldName, File groupsFile, File usersFile) throws FileNotFoundException, IOException {
+        WorldDataHolder ph = new WorldDataHolder(worldName);
+        ph.groupsFile = groupsFile;
+        ph.usersFile = usersFile;
+
+
+        //READ GROUPS FILE
+        Yaml yamlGroups = new Yaml(new SafeConstructor());
+        Map<String, Object> groupsRootDataNode;
+        if (!groupsFile.exists()) {
+            throw new IllegalArgumentException("The file which should contain permissions does not exist!\n" + groupsFile.getPath());
+        }
+        FileInputStream groupsInputStream = new FileInputStream(groupsFile);
+        try {
+            groupsRootDataNode = (Map<String, Object>) yamlGroups.load(new UnicodeReader(groupsInputStream));
+            if (groupsRootDataNode == null) {
+                throw new NullPointerException();
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("The following file couldn't pass on Parser.\n" + groupsFile.getPath(), ex);
+        } finally {
+            groupsInputStream.close();
+        }
+
+        //PROCESS GROUPS FILE
+        Map<String, List<String>> inheritance = new HashMap<String, List<String>>();
+        try {
+            Map<String, Object> allGroupsNode = (Map<String, Object>) groupsRootDataNode.get("groups");
+            for (String groupKey : allGroupsNode.keySet()) {
+                Map<String, Object> thisGroupNode = (Map<String, Object>) allGroupsNode.get(groupKey);
+                Group thisGrp = ph.createGroup(groupKey);
+                if (thisGrp == null) {
+                    throw new IllegalArgumentException("I think this user was declared more than once: " + groupKey);
+                }
+                if (thisGroupNode.get("default") == null) {
+                    thisGroupNode.put("default", false);
+                }
+                if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
+                    if(ph.getDefaultGroup()!=null){
+                        GroupManager.logger.warning("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
+                        GroupManager.logger.warning("Overriding first request.");
+                    }
+                    ph.setDefaultGroup(thisGrp);
+                }
+
+                //PERMISSIONS NODE
+                if (thisGroupNode.get("permissions") == null) {
+                    thisGroupNode.put("permissions", new ArrayList<String>());
+                }
+                if (thisGroupNode.get("permissions") instanceof List) {
+                    for (Object o : ((List) thisGroupNode.get("permissions"))) {
+                        thisGrp.addPermission(o.toString());
+                    }
+                } else if (thisGroupNode.get("permissions") instanceof String) {
+                    thisGrp.addPermission((String) thisGroupNode.get("permissions"));
+                } else {
+                    throw new IllegalArgumentException("Unknown type of permissions node(Should be String or List<String>): " + thisGroupNode.get("permissions").getClass().getName());
+                }
+
+                //INFO NODE
+                Map<String, Object> infoNode = (Map<String, Object>) thisGroupNode.get("info");
+                if (infoNode != null) {
+                    thisGrp.setVariables(infoNode);
+                }
+
+                //END INFO NODE
+
+                Object inheritNode = thisGroupNode.get("inheritance");
+                if (inheritNode == null) {
+                    thisGroupNode.put("inheritance", new ArrayList<String>());
+                } else if (inheritNode instanceof List) {
+                    List<String> groupsInh = (List<String>) inheritNode;
+                    for (String grp : groupsInh) {
+                        if (inheritance.get(groupKey) == null) {
+                            List<String> thisInherits = new ArrayList<String>();
+                            inheritance.put(groupKey, thisInherits);
+                        }
+                        inheritance.get(groupKey).add(grp);
+
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new IllegalArgumentException("Your Permissions config file is invalid.  See console for details.");
+        }
+        if (ph.defaultGroup == null) {
+            throw new IllegalArgumentException("There was no Default Group declared.");
+        }
+        for (String groupKey : inheritance.keySet()) {
+            List<String> inheritedList = inheritance.get(groupKey);
+            Group thisGroup = ph.getGroup(groupKey);
+            for (String inheritedKey : inheritedList) {
+                Group inheritedGroup = ph.getGroup(inheritedKey);
+                if (thisGroup != null && inheritedGroup != null) {
+                    thisGroup.addInherits(inheritedGroup);
+                }
+            }
+        }
+
+
+        //READ USERS FILE
+        Yaml yamlUsers = new Yaml(new SafeConstructor());
+        Map<String, Object> usersRootDataNode;
+        if (!groupsFile.exists()) {
+            throw new IllegalArgumentException("The file which should contain permissions does not exist!\n" + groupsFile.getPath());
+        }
+        FileInputStream usersInputStream = new FileInputStream(usersFile);
+        try {
+            usersRootDataNode = (Map<String, Object>) yamlUsers.load(new UnicodeReader(usersInputStream));
+            if (usersRootDataNode == null) {
+                throw new NullPointerException();
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("The following file couldn't pass on Parser.\n" + groupsFile.getPath(), ex);
+        } finally {
+            usersInputStream.close();
+        }
+
+        // PROCESS USERS FILE
+        Map<String, Object> allUsersNode = (Map<String, Object>) usersRootDataNode.get("users");
+        for (String usersKey : allUsersNode.keySet()) {
+            Map<String, Object> thisUserNode = (Map<String, Object>) allUsersNode.get(usersKey);
+            User thisUser = ph.createUser(usersKey);
+            if (thisUser == null) {
+                throw new IllegalArgumentException("I think this user was declared more than once: " + usersKey);
+            }
+            if (thisUserNode.get("permissions") == null) {
+                thisUserNode.put("permissions", new ArrayList<String>());
+            }
+            if (thisUserNode.get("permissions") instanceof List) {
+                for (Object o : ((List) thisUserNode.get("permissions"))) {
+                    thisUser.addPermission(o.toString());
+                }
+            } else if (thisUserNode.get("permissions") instanceof String) {
+                thisUser.addPermission(thisUserNode.get("permissions").toString());
             }
 
 
@@ -404,7 +588,8 @@ public class DataHolder {
      * @param ph
      * @param file
      */
-    public static void write(DataHolder ph, File file) {
+    @Deprecated
+    public static void write(WorldDataHolder ph, File file) {
         Map<String, Object> root = new HashMap<String, Object>();
 
         Map<String, Object> pluginMap = new HashMap<String, Object>();
@@ -434,14 +619,14 @@ public class DataHolder {
 
             aGroupMap.put("inheritance", group.getInherits());
 
-            aGroupMap.put("permissions", group.permissions);
+            aGroupMap.put("permissions", group.getPermissionList());
         }
 
         Map<String, Object> usersMap = new HashMap<String, Object>();
         root.put("users", usersMap);
         for (String userKey : ph.users.keySet()) {
             User user = ph.users.get(userKey);
-            if ((user.getGroup() == null || user.getGroup().equals(ph.defaultGroup)) && user.permissions.isEmpty()) {
+            if ((user.getGroup() == null || user.getGroup().equals(ph.defaultGroup)) && user.getPermissionList().isEmpty()) {
                 continue;
             }
 
@@ -464,7 +649,7 @@ public class DataHolder {
             }
             //END USER INFO NODE - BETA
 
-            aUserMap.put("permissions", user.permissions);
+            aUserMap.put("permissions", user.getPermissionList());
         }
         DumperOptions opt = new DumperOptions();
         opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -473,6 +658,113 @@ public class DataHolder {
         FileWriter tx = null;
         try {
             tx = new FileWriter(file, false);
+            tx.write(yaml.dump(root));
+            tx.flush();
+        } catch (Exception e) {
+        } finally {
+            try {
+                tx.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    /**
+     *  Write a dataHolder in a specified file
+     * @param ph
+     * @param file
+     */
+    public static void writeGroups(WorldDataHolder ph, File groupsFile) {
+        Map<String, Object> root = new HashMap<String, Object>();
+
+        Map<String, Object> groupsMap = new HashMap<String, Object>();
+        root.put("groups", groupsMap);
+        for (String groupKey : ph.groups.keySet()) {
+            Group group = ph.groups.get(groupKey);
+
+            Map<String, Object> aGroupMap = new HashMap<String, Object>();
+            groupsMap.put(group.getName(), aGroupMap);
+
+            if(ph.defaultGroup==null){
+                GroupManager.logger.severe("There is no default group for world: "+ph.getName());
+            }
+            aGroupMap.put("default", group.equals(ph.defaultGroup));
+
+            Map<String, Object> infoMap = new HashMap<String, Object>();
+            aGroupMap.put("info", infoMap);
+
+            for (String infoKey : group.getVariables().getVarKeyList()) {
+                infoMap.put(infoKey, group.getVariables().getVarObject(infoKey));
+            }
+
+            aGroupMap.put("inheritance", group.getInherits());
+
+            aGroupMap.put("permissions", group.getPermissionList());
+        }
+
+        DumperOptions opt = new DumperOptions();
+        opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        final Yaml yaml = new Yaml(opt);
+
+        FileWriter tx = null;
+        try {
+            tx = new FileWriter(groupsFile, false);
+            tx.write(yaml.dump(root));
+            tx.flush();
+        } catch (Exception e) {
+        } finally {
+            try {
+                tx.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+
+    /**
+     *  Write a dataHolder in a specified file
+     * @param ph
+     * @param file
+     */
+    public static void writeUsers(WorldDataHolder ph, File usersFile) {
+        Map<String, Object> root = new HashMap<String, Object>();
+
+        Map<String, Object> usersMap = new HashMap<String, Object>();
+        root.put("users", usersMap);
+        for (String userKey : ph.users.keySet()) {
+            User user = ph.users.get(userKey);
+            if ((user.getGroup() == null || user.getGroup().equals(ph.defaultGroup)) && user.getPermissionList().isEmpty() && user.getVariables().isEmpty()) {
+                continue;
+            }
+
+            Map<String, Object> aUserMap = new HashMap<String, Object>();
+            usersMap.put(user.getName(), aUserMap);
+
+            if (user.getGroup() == null) {
+                aUserMap.put("group", ph.defaultGroup.getName());
+            } else {
+                aUserMap.put("group", user.getGroup().getName());
+            }
+            //USER INFO NODE - BETA
+            if (user.getVariables().getSize() > 0) {
+                Map<String, Object> infoMap = new HashMap<String, Object>();
+                aUserMap.put("info", infoMap);
+
+                for (String infoKey : user.getVariables().getVarKeyList()) {
+                    infoMap.put(infoKey, user.getVariables().getVarObject(infoKey));
+                }
+            }
+            //END USER INFO NODE - BETA
+
+            aUserMap.put("permissions", user.getPermissionList());
+        }
+        DumperOptions opt = new DumperOptions();
+        opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        final Yaml yaml = new Yaml(opt);
+
+        FileWriter tx = null;
+        try {
+            tx = new FileWriter(usersFile, false);
             tx.write(yaml.dump(root));
             tx.flush();
         } catch (Exception e) {
@@ -508,5 +800,70 @@ public class DataHolder {
                 continue;
             }
         }
+    }
+
+    /**
+     * @return the permissionsHandler
+     */
+    public AnjoPermissionsHandler getPermissionsHandler() {
+        if(permissionsHandler==null){
+            permissionsHandler=new AnjoPermissionsHandler(this);
+        }
+        return permissionsHandler;
+    }
+
+    public boolean haveUsersChanged(){
+        if(haveUsersChanged)
+            return true;
+        for(User u: getUserList()){
+            if(u.isChanged()){
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean haveGroupsChanged(){
+        if(haveGroupsChanged)
+            return true;
+        for(Group g: getGroupList()){
+            if(g.isChanged()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void removeUsersChangedFlag(){
+        haveUsersChanged = false;
+        for(User u: getUserList()){
+            u.flagAsSaved();
+        }
+    }
+    public void removeGroupsChangedFlag(){
+        haveGroupsChanged = false;
+        for(Group g: getGroupList()){
+            g.flagAsSaved();
+        }
+    }
+
+    /**
+     * @return the usersFile
+     */
+    public File getUsersFile() {
+        return usersFile;
+    }
+
+    /**
+     * @return the groupsFile
+     */
+    public File getGroupsFile() {
+        return groupsFile;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
     }
 }

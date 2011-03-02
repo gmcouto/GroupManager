@@ -1,0 +1,50 @@
+groups:
+    Admins:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - SemiAdmin
+        permissions:
+        - '*'
+    Default:
+        default: true
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance: []
+        permissions:
+        - essentials.spawn
+        - essentials.motd
+        - essentials.help
+        - essentials.home
+        - essentials.sethome
+    Moderator:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - Default
+        permissions:
+        - essentials.tp
+        - essentials.tphere
+        - essentials.item
+        - essentials.give
+    SemiAdmin:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - Moderator
+        permissions:
+        - +groupmanager.mandemote
+        - +groupmanager.manpromote
+        - -groupmanager.*
+        - '*'

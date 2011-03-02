@@ -39,5 +39,12 @@ public class StringPermissionComparator implements Comparator<String> {
         }
         return permA.compareToIgnoreCase(permB);
     }
+    private static StringPermissionComparator instance;
+    public static StringPermissionComparator getInstance(){
+        if(instance==null){
+            instance = new StringPermissionComparator();
+        }
+        return instance;
+    }
 
 }

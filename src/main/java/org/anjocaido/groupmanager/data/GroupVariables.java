@@ -17,6 +17,7 @@ public class GroupVariables extends Variables implements Cloneable {
     private Group owner;
 
     public GroupVariables(Group owner) {
+        super(owner);
         this.owner = owner;
         addVar("prefix", "");
         addVar("suffix", "");
@@ -24,19 +25,23 @@ public class GroupVariables extends Variables implements Cloneable {
     }
 
     public GroupVariables(Group owner, Map<String, Object> varList) {
+        super(owner);
         variables = varList;
         if (variables.get("prefix") == null) {
             variables.put("prefix", "");
+            owner.flagAsChanged();
         }
         //thisGrp.prefix = infoNode.get("prefix").toString();
 
         if (variables.get("suffix") == null) {
             variables.put("suffix", "");
+            owner.flagAsChanged();
         }
         //thisGrp.suffix = infoNode.get("suffix").toString();
 
         if (variables.get("build") == null) {
             variables.put("build", false);
+            owner.flagAsChanged();
         }
         this.owner = owner;
     }
@@ -50,6 +55,7 @@ public class GroupVariables extends Variables implements Cloneable {
         for (String key : variables.keySet()) {
             clone.variables.put(key, variables.get(key));
         }
+        newOwner.flagAsChanged();
         return clone;
     }
 
@@ -70,11 +76,13 @@ public class GroupVariables extends Variables implements Cloneable {
         } else if (name.equals("build")) {
             addVar("build", false);
         }
+        owner.flagAsChanged();
     }
 
     /**
      * @return the owner
      */
+    @Override
     public Group getOwner() {
         return owner;
     }

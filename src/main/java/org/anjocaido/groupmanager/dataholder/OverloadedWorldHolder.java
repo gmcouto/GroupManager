@@ -16,7 +16,7 @@ import org.bukkit.command.CommandSender;
  *
  * @author gabrielcouto
  */
-public class OverloadedDataHolder extends DataHolder {
+public class OverloadedWorldHolder extends WorldDataHolder {
 
     /**
      *
@@ -27,8 +27,11 @@ public class OverloadedDataHolder extends DataHolder {
      *
      * @param ph
      */
-    public OverloadedDataHolder(DataHolder ph) {
+    public OverloadedWorldHolder(WorldDataHolder ph) {
+        super(ph.getName());
         this.f = ph.f;
+        this.groupsFile = ph.groupsFile;
+        this.usersFile = ph.usersFile;
         this.defaultGroup = ph.defaultGroup;
         this.groups = ph.groups;
         this.users = ph.users;
@@ -50,6 +53,7 @@ public class OverloadedDataHolder extends DataHolder {
             return users.get(userName.toLowerCase());
         }
         User newUser = createUser(userName);
+        haveUsersChanged = true;
         return newUser;
     }
 
@@ -77,6 +81,7 @@ public class OverloadedDataHolder extends DataHolder {
         //END CODE
         removeUser(theUser.getName());
         users.put(theUser.getName().toLowerCase(), theUser);
+        haveUsersChanged = true;
     }
 
     /**
@@ -94,6 +99,7 @@ public class OverloadedDataHolder extends DataHolder {
         //END CODE
         if (users.containsKey(userName.toLowerCase())) {
             users.remove(userName.toLowerCase());
+            haveUsersChanged = true;
             return true;
         }
         return false;
@@ -123,6 +129,7 @@ public class OverloadedDataHolder extends DataHolder {
 
                 }
                 //END OVERLOAD
+                haveGroupsChanged = true;
                 return true;
             }
         }
@@ -176,9 +183,7 @@ public class OverloadedDataHolder extends DataHolder {
      * @param userName
      */
     public void removeOverload(String userName) {
-        //System.out.println("Grupo antes " + this.getUser(userName).group.getName());
         overloadedUsers.remove(userName.toLowerCase());
-        //System.out.println("Grupo depois " + this.getUser(userName).group.getName());
     }
 
     /**

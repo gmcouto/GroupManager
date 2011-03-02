@@ -1,5 +1,5 @@
 name: GroupManager
-version: 0.99d
+version: 1.0(pre-alpha-dev)
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -109,3 +109,9 @@ commands:
   mantogglesave:
     description: Toggle on/ff the autosave.
     usage: /<command>
+  manworld:
+    description: Prints the selected world name
+    usage: /<command>
+  manselect:
+    description: Select a world with given name, or default world if none found.
+    usage: /<command> <world>

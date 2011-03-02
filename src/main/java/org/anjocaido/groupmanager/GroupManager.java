@@ -9,32 +9,30 @@ import org.anjocaido.groupmanager.utils.GroupManagerPermissions;
 import org.anjocaido.groupmanager.data.Variables;
 import org.anjocaido.groupmanager.data.User;
 import org.anjocaido.groupmanager.data.Group;
-import org.anjocaido.groupmanager.dataholder.OverloadedDataHolder;
-import org.anjocaido.groupmanager.dataholder.DataHolder;
-import com.nijiko.permissions.PermissionHandler;
-import com.sun.org.apache.bcel.internal.generic.GOTO;
+import org.anjocaido.groupmanager.dataholder.OverloadedWorldHolder;
+import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
+import org.anjocaido.groupmanager.dataholder.worlds.WorldsHolder;
+import org.anjocaido.groupmanager.utils.GMLoggerHandler;
 import org.bukkit.ChatColor;
-import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.Configuration;
 
 /**
  *
@@ -42,24 +40,22 @@ import org.bukkit.util.config.Configuration;
  */
 public class GroupManager extends JavaPlugin {
 
-    private File permissionsFile;
     private File configFile;
     private File backupFolder;
-    private File nijikokunPermissionsFile;
-    private OverloadedDataHolder dataHolder;
     private Runnable commiter;
     private ScheduledThreadPoolExecutor scheduler;
-    private AnjoPermissionsHandler permissionHandler;
-    private ArrayList<User> overloadedUsers = new ArrayList<User>();
-    private Configuration config;
+    private Map<String, ArrayList<User>> overloadedUsers = new HashMap<String, ArrayList<User>>();
+    private Map<CommandSender, String> selectedWorlds = new HashMap<CommandSender, String>();
+    private WorldsHolder worldsHolder;
     private boolean validateOnlinePlayer = true;
     private boolean isReady = false;
+    private GMConfiguration config;
+    public static final Logger logger = Logger.getLogger(GroupManager.class.getName());
 
     @Override
     public void onDisable() {
-        //throw new UnsupportedOperationException("Not supported yet.");
-        if (dataHolder != null) {
-            dataHolder.commit();
+        if (worldsHolder != null) {
+            worldsHolder.saveChanges();
         }
         disableScheduler();
         // EXAMPLE: Custom code, here we just output some info so we can check all is well
@@ -69,92 +65,58 @@ public class GroupManager extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        if (dataHolder == null) {
+        GroupManager.logger.setUseParentHandlers(false);
+        GMLoggerHandler ch = new GMLoggerHandler();
+        GroupManager.logger.addHandler(ch);
+        logger.setLevel(Level.ALL);
+        if (worldsHolder == null) {
             prepareFileFields();
             prepareConfig();
-            prepareData();
+            worldsHolder = new WorldsHolder(this);
         }
 
         PluginDescriptionFile pdfFile = this.getDescription();
-        if (dataHolder == null) {
-            System.out.println("Can't enable " + pdfFile.getName() + " version " + pdfFile.getVersion() + ", bad loading!");
+        if (worldsHolder == null) {
+            GroupManager.logger.severe("Can't enable " + pdfFile.getName() + " version " + pdfFile.getVersion() + ", bad loading!");
             this.getServer().getPluginManager().disablePlugin(this);
             throw new IllegalStateException("An error ocurred while loading GroupManager");
         }
 
         enableScheduler();
-        // EXAMPLE: Custom code, here we just output some info so we can check all is well
         System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
     }
+    
 
-    private void prepareData() {
-        if (dataHolder == null) {
-            if (!permissionsFile.exists()) {
-                if (nijikokunPermissionsFile.exists()) {
-                    try {
-                        copy(nijikokunPermissionsFile, permissionsFile);
-                    } catch (IOException ex) {
-                        Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (!permissionsFile.exists()) {
-                    InputStream template = this.getClassLoader().getResourceAsStream("data.yml");
-                    try {
-                        copy(template, permissionsFile);
-                    } catch (IOException ex) {
-                        throw new IllegalArgumentException("Couldn't copy template to GroupManagerFolder");
-                    }
-                } else {
-                    doBackup();
-                }
-            }
-            try {
-                dataHolder = new OverloadedDataHolder(DataHolder.load(permissionsFile));
-            } catch (Exception ex) {
-                dataHolder = null;
-                Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
-                throw new IllegalArgumentException("Permissions file is in wrong format");
-            }
-            permissionHandler = new AnjoPermissionsHandler(dataHolder);
-        } else {
-            dataHolder.reload();
-        }
-
+    public InputStream getResourceAsStream(String fileName){
+        return this.getClassLoader().getResourceAsStream(fileName);
     }
 
     private void prepareFileFields() {
         configFile = new File(this.getDataFolder(), "config.yml");
-        permissionsFile = new File(this.getDataFolder(), "data.yml");
-        nijikokunPermissionsFile = new File(this.getDataFolder().getParentFile(), "Permissions" + permissionsFile.separator + "config.yml");
         backupFolder = new File(this.getDataFolder(), "backup");
         if (!backupFolder.exists()) {
-            backupFolder.mkdirs();
+            getBackupFolder().mkdirs();
         }
     }
 
     private void prepareConfig() {
-        config = new Configuration(configFile);
-        if (!configFile.exists()) {
-            config.setProperty("settings.data.save.minutes", 10);
-            config.save();
-        }
-        config.load();
+        config = new GMConfiguration(this);
     }
 
     public void enableScheduler() {
-        if (dataHolder != null) {
+        if (worldsHolder != null) {
             disableScheduler();
             commiter = new Runnable() {
 
                 @Override
                 public void run() {
-                    GroupManager.this.commit();
+                    GroupManager.this.worldsHolder.saveChanges();
                 }
             };
             scheduler = new ScheduledThreadPoolExecutor(1);
-            int minutes = config.getInt("settings.data.save.minutes", 10);
+            int minutes = getConfig().getSaveInterval();
             scheduler.scheduleAtFixedRate(commiter, minutes, minutes, TimeUnit.MINUTES);
-            System.out.println(this.getDescription().getName() + " - Scheduled Data Saving is set for every " + minutes + " minutes!");
+            GroupManager.logger.info("Scheduled Data Saving is set for every "+minutes+" minutes!");
         }
     }
 
@@ -167,90 +129,41 @@ public class GroupManager extends JavaPlugin {
             } catch (Exception e) {
             }
             scheduler = null;
-            System.out.println(this.getDescription().getName() + " - Scheduled Data Saving has been disabled!");
+            GroupManager.logger.info("Scheduled Data Saving is disabled!");
         }
     }
 
     /**
+     * Use the WorldsHolder saveChanges directly instead
      * Saves the data on file
      */
+    @Deprecated
     public void commit() {
-        if (dataHolder != null) {
-            doBackup();
-            System.out.println(this.getDescription().getName() + " - Saving your data...");
-            dataHolder.commit();
-            System.out.println(this.getDescription().getName() + " - Saving done!");
+        if (worldsHolder != null) {
+            worldsHolder.saveChanges();
         }
     }
 
     /**
+     * Use worlds holder to reload a specific world
      * Reloads the data
      */
+    @Deprecated
     public void reload() {
-        if (dataHolder != null) {
-            System.out.println(this.getDescription().getName() + " - Reloading your data...");
-            dataHolder.reload();
-            System.out.println(this.getDescription().getName() + " - Roload done!");
-        }
+        worldsHolder.reloadAll();
     }
 
-    private void copy(InputStream src, File dst) throws IOException {
-        InputStream in = src;
-        OutputStream out = new FileOutputStream(dst);
-
-        // Transfer bytes from in to out
-        byte[] buf = new byte[1024];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        out.close();
+    public WorldsHolder getWorldsHolder(){
+        return worldsHolder;
     }
-
-    private void copy(File src, File dst) throws IOException {
-        InputStream in = new FileInputStream(src);
-        copy(in, dst);
-        in.close();
-    }
-
-    private void doBackup() {
-        System.out.println(this.getDescription().getName() + " - Backing up your data...");
-        File backup = new File(backupFolder, "bkpperm" + System.currentTimeMillis() + ".yml");
-        long oldTime = System.currentTimeMillis() - 86400000L;
-        for (File olds : backupFolder.listFiles()) {
-            if (olds.lastModified() < oldTime) {
-                try {
-                    olds.delete();
-                } catch (Exception e) {
-                }
-            }
-        }
-        if (backup.exists() && backup.isFile()) {
-            backup.delete();
-        }
-        try {
-            copy(permissionsFile, backup);
-        } catch (IOException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.out.println(this.getDescription().getName() + " - Backup done!");
-    }
-
-    /**
-     * The new permission handler in the old interface... it extends the old, by Nijikokun
-     * It is compatible with the plugins made for Permissions
-     * @return a permission handler
-     */
-    public PermissionHandler getPermissionHandler() {
-        return permissionHandler;
-    }
-
+    
     /**
      * The handler in the interface created by AnjoCaido
      * @return
      */
-    public AnjoPermissionsHandler getHandler() {
-        return permissionHandler;
+    @Deprecated
+    public AnjoPermissionsHandler getPermissionHandler() {
+        return worldsHolder.getDefaultWorld().getPermissionsHandler();
     }
 
     /**
@@ -258,16 +171,18 @@ public class GroupManager extends JavaPlugin {
      * Yet it is affected by overloading. But seamless.
      * @return the dataholder with all information
      */
-    public DataHolder getData() {
-        return dataHolder;
+    @Deprecated
+    public WorldDataHolder getData() {
+        return worldsHolder.getDefaultWorld();
     }
 
     /**
      *  Use this if you want to play with overloading.
      * @return  a dataholder with overloading interface
      */
-    public OverloadedDataHolder getOverloadedClassData() {
-        return dataHolder;
+    @Deprecated
+    public OverloadedWorldHolder getOverloadedClassData() {
+        return worldsHolder.getDefaultWorld();
     }
 
     /**
@@ -276,17 +191,29 @@ public class GroupManager extends JavaPlugin {
      * @param cmd 
      * @param args
      */
+    @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         boolean playerCanDo = false;
         boolean isConsole = false;
         Player p = null;
         Group playerGroup = null;
         User playerUser = null;
+
+        if(!selectedWorlds.containsKey(sender)){
+            selectedWorlds.put(sender, worldsHolder.getDefaultWorld().getName());
+        }
+        
+        OverloadedWorldHolder dataHolder = worldsHolder.getWorldData(selectedWorlds.get(sender));
+        AnjoPermissionsHandler permissionHandler = dataHolder.getPermissionsHandler();
+        if(overloadedUsers.get(dataHolder.getName().toLowerCase())==null){
+            overloadedUsers.put(dataHolder.getName().toLowerCase(), new ArrayList<User>());
+        }
+
         if (sender instanceof Player) {
             p = (Player) sender;
             playerUser = dataHolder.getUser(p.getName());
             playerGroup = playerUser.getGroup();
-            if (permissionHandler.has(p, "groupmanager." + cmd.getName())) {
+            if (worldsHolder.getWorldPermissions(p).has(p, "groupmanager." + cmd.getName())) {
                 playerCanDo = true;
             }
         } else if (sender instanceof ConsoleCommandSender) {
@@ -308,28 +235,28 @@ public class GroupManager extends JavaPlugin {
             execCmd = GroupManagerPermissions.valueOf(cmd.getName());
         } catch (Exception e) {
             //this error happened once with someone. now im prepared... i think
-            System.out.println("===================================================");
-            System.out.println("=              ERROR REPORT START                 =");
-            System.out.println("===================================================");
-            System.out.println("=  COPY AND PASTE THIS TO GROUPMANAGER DEVELOPER  =");
-            System.out.println("===================================================");
-            System.out.println(this.getDescription().getName());
-            System.out.println(this.getDescription().getVersion());
-            System.out.println("An error occured while trying to execute command:");
-            System.out.println(cmd.getName());
-            System.out.println("With " + args.length + " arguments:");
+            GroupManager.logger.severe("===================================================");
+            GroupManager.logger.severe("=              ERROR REPORT START                 =");
+            GroupManager.logger.severe("===================================================");
+            GroupManager.logger.severe("=  COPY AND PASTE THIS TO GROUPMANAGER DEVELOPER  =");
+            GroupManager.logger.severe("===================================================");
+            GroupManager.logger.severe(this.getDescription().getName());
+            GroupManager.logger.severe(this.getDescription().getVersion());
+            GroupManager.logger.severe("An error occured while trying to execute command:");
+            GroupManager.logger.severe(cmd.getName());
+            GroupManager.logger.severe("With "+args.length+" arguments:");
             for (String ar : args) {
-                System.out.println(ar);
+                GroupManager.logger.severe(ar);
             }
-            System.out.println("The field '" + cmd.getName() + "' was not found in enum.");
-            System.out.println("And could not be parsed.");
-            System.out.println("FIELDS FOUND IN ENUM:");
+            GroupManager.logger.severe("The field '"+ cmd.getName()+"' was not found in enum.");
+            GroupManager.logger.severe("And could not be parsed.");
+            GroupManager.logger.severe("FIELDS FOUND IN ENUM:");
             for (GroupManagerPermissions val : GroupManagerPermissions.values()) {
-                System.out.println(val);
+                GroupManager.logger.severe(val.name());
             }
-            System.out.println("===================================================");
-            System.out.println("=              ERROR REPORT ENDED                 =");
-            System.out.println("===================================================");
+            GroupManager.logger.severe("===================================================");
+            GroupManager.logger.severe("=              ERROR REPORT ENDED                 =");
+            GroupManager.logger.severe("===================================================");
             sender.sendMessage("An error occurred. Ask the admin to take a look at the console.");
         }
 
@@ -463,7 +390,7 @@ public class GroupManager extends JavaPlugin {
                         return false;
                     }
                     //PARECE OK
-                    auxUser.permissions.add(args[1]);
+                    auxUser.addPermission(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You added '" + args[1] + "' to player '" + auxUser.getName() + "' permissions.");
 
                     return true;
@@ -500,13 +427,13 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "The user doesn't have direct access to that permission.");
                         return false;
                     }
-                    if (!auxUser.permissions.contains(args[1])) {
+                    if (!auxUser.hasSamePermissionNode(args[1])) {
                         sender.sendMessage(ChatColor.RED + "This permission node doesn't match any node.");
                         sender.sendMessage(ChatColor.RED + "But matches node: " + auxString);
                         return false;
                     }
                     //PARECE OK
-                    auxUser.permissions.remove(args[1]);
+                    auxUser.removePermission(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You removed '" + args[1] + "' from player '" + auxUser.getName() + "' permissions.");
 
                     return true;
@@ -532,7 +459,7 @@ public class GroupManager extends JavaPlugin {
                     //VALIDANDO PERMISSAO
                     //PARECE OK
                     auxString = "";
-                    for (String perm : auxUser.permissions) {
+                    for (String perm : auxUser.getPermissionList()) {
                         auxString += perm + ", ";
                     }
                     if (auxString.lastIndexOf(",") > 0) {
@@ -599,7 +526,7 @@ public class GroupManager extends JavaPlugin {
                         return false;
                     }
                     //PARECE OK
-                    auxGroup.permissions.add(args[1]);
+                    auxGroup.addPermission(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You added '" + args[1] + "' to group '" + auxGroup.getName() + "' permissions.");
 
                     return true;
@@ -622,13 +549,13 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "That group doesn't own directly the permission");
                         return false;
                     }
-                    if (!auxGroup.permissions.contains(args[1])) {
+                    if (!auxGroup.hasSamePermissionNode(args[1])) {
                         sender.sendMessage(ChatColor.RED + "That group own the permission. But there is no equal node there.");
                         sender.sendMessage(ChatColor.RED + "The node might be: '" + permissionHandler.checkGroupOnlyPermission(auxGroup, args[1]) + "'");
                         return false;
                     }
                     //PARECE OK
-                    auxGroup.permissions.remove(args[1]);
+                    auxGroup.removePermission(args[1]);
                     sender.sendMessage(ChatColor.YELLOW + "You removed '" + args[1] + "' from group '" + auxGroup.getName() + "' permissions.");
 
                     return true;
@@ -647,7 +574,7 @@ public class GroupManager extends JavaPlugin {
 
                     //PARECE OK
                     auxString = "";
-                    for (String perm : auxGroup.permissions) {
+                    for (String perm : auxGroup.getPermissionList()) {
                         auxString += perm + ", ";
                     }
                     if (auxString.lastIndexOf(",") > 0) {
@@ -1042,7 +969,7 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     dataHolder.overloadUser(auxUser.getName());
-                    overloadedUsers.add(dataHolder.getUser(auxUser.getName()));
+                    overloadedUsers.get(dataHolder.getName()).add(dataHolder.getUser(auxUser.getName()));
                     sender.sendMessage(ChatColor.YELLOW + "Player overloaded!");
 
                     return true;
@@ -1072,8 +999,8 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     dataHolder.removeOverload(auxUser.getName());
-                    if (overloadedUsers.contains(auxUser)) {
-                        overloadedUsers.remove(auxUser);
+                    if (overloadedUsers.get(dataHolder.getName().toLowerCase()).contains(auxUser)) {
+                        overloadedUsers.get(dataHolder.getName()).remove(auxUser);
                     }
                     sender.sendMessage(ChatColor.YELLOW + "You removed that player overload. He's back to normal!");
 
@@ -1083,7 +1010,7 @@ public class GroupManager extends JavaPlugin {
                     auxString = "";
                     removeList = new ArrayList<User>();
                     count = 0;
-                    for (User u : overloadedUsers) {
+                    for (User u : overloadedUsers.get(dataHolder.getName())) {
                         if (!dataHolder.isOverloaded(u.getName())) {
                             removeList.add(u);
                         } else {
@@ -1096,13 +1023,13 @@ public class GroupManager extends JavaPlugin {
                         return true;
                     }
                     auxString = auxString.substring(0, auxString.lastIndexOf(","));
-                    overloadedUsers.removeAll(removeList);
+                    overloadedUsers.get(dataHolder.getName()).removeAll(removeList);
                     sender.sendMessage(ChatColor.YELLOW + " " + count + " Users in overload mode: " + ChatColor.WHITE + auxString);
                     return true;
                 case tempdelall:
                     removeList = new ArrayList<User>();
                     count = 0;
-                    for (User u : overloadedUsers) {
+                    for (User u : overloadedUsers.get(dataHolder.getName())) {
                         if (dataHolder.isOverloaded(u.getName())) {
                             dataHolder.removeOverload(u.getName());
                             count++;
@@ -1244,11 +1171,38 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.YELLOW + "The auto-saving is disabled!");
                     }
                     return true;
+                case manworld:
+                    sender.sendMessage(ChatColor.YELLOW + "You have the world '"+dataHolder.getName()+"' in your selection.");
+                    return true;
+                case manselect:
+                    if (args.length != 1) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    dataHolder = worldsHolder.getWorldData(args[0]);
+                    permissionHandler = dataHolder.getPermissionsHandler();
+                    selectedWorlds.put(sender, dataHolder.getName());
+                    sender.sendMessage(ChatColor.YELLOW + "You have selected world '"+dataHolder.getName()+"'.");
+                    return true;
                 default:
                     break;
             }
         }
         sender.sendMessage(ChatColor.RED + "You are not allowed to use that command.");
         return false;
+    }
+
+    /**
+     * @return the config
+     */
+    public GMConfiguration getConfig() {
+        return config;
+    }
+
+    /**
+     * @return the backupFolder
+     */
+    public File getBackupFolder() {
+        return backupFolder;
     }
 }

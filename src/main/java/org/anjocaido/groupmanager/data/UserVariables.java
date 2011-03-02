@@ -5,7 +5,6 @@
 
 package org.anjocaido.groupmanager.data;
 
-import org.anjocaido.groupmanager.data.User;
 import java.util.Map;
 
 /**
@@ -15,9 +14,11 @@ import java.util.Map;
 public class UserVariables extends Variables{
     private User owner;
     public UserVariables(User owner){
+        super(owner);
         this.owner = owner;
     }
     public UserVariables(User owner, Map<String, Object> varList) {
+        super(owner);
         this.variables = varList;
         this.owner = owner;
     }
@@ -30,11 +31,13 @@ public class UserVariables extends Variables{
         for (String key : variables.keySet()) {
             clone.variables.put(key, variables.get(key));
         }
+        newOwner.flagAsChanged();
         return clone;
     }
     /**
      * @return the owner
      */
+    @Override
     public User getOwner() {
         return owner;
     }

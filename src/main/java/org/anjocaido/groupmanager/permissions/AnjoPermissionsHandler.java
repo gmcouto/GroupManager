@@ -4,18 +4,11 @@
  */
 package org.anjocaido.groupmanager.permissions;
 
-import org.anjocaido.groupmanager.utils.StringPermissionComparator;
-import com.nijiko.permissions.Control;
-import com.nijiko.permissions.PermissionHandler;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.StringTokenizer;
 import org.anjocaido.groupmanager.data.Group;
-import org.anjocaido.groupmanager.dataholder.DataHolder;
+import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import org.anjocaido.groupmanager.data.User;
 import org.bukkit.entity.Player;
 
@@ -25,28 +18,20 @@ import org.bukkit.entity.Player;
  * But implemented to use GroupManager system. Which provides instant changes,
  * without file access.
  *
+ * It holds permissions only for one single world.
+ *
  * @author gabrielcouto
  */
-public class AnjoPermissionsHandler extends Control {
+public class AnjoPermissionsHandler extends PermissionsReaderInterface {
 
-    DataHolder ph = null;
+    WorldDataHolder ph = null;
 
     /**
      *
      * @param holder
      */
-    public AnjoPermissionsHandler(DataHolder holder) {
-        super(null);
+    public AnjoPermissionsHandler(WorldDataHolder holder) {
         ph = holder;
-    }
-
-    /**
-     * Does nothing. It's not used by GroupManager.
-     * But still here to fool Permissions dependent plugins.
-     */
-    @Override
-    public void load() {
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
@@ -73,12 +58,12 @@ public class AnjoPermissionsHandler extends Control {
 
     /**
      *
-     * @param group
+     * @param userName
      * @return
      */
     @Override
-    public String getGroup(String group) {
-        return ph.getUser(group).getGroup().getName();
+    public String getGroup(String userName) {
+        return ph.getUser(userName).getGroup().getName();
     }
 
     /**
@@ -89,7 +74,6 @@ public class AnjoPermissionsHandler extends Control {
      */
     @Override
     public boolean inGroup(String name, String group) {
-        //System.out.println("Verifying inGroup user "+name+" with "+group);
 
         return searchGroupInInheritance(ph.getUser(name).getGroup(), group, null);
     }
@@ -387,8 +371,8 @@ public class AnjoPermissionsHandler extends Control {
      * @return
      */
     public String checkUserOnlyPermission(User user, String permission) {
-        Collections.sort(user.permissions, new StringPermissionComparator());
-        for (String access : user.permissions) {
+        user.sortPermissions();
+        for (String access : user.getPermissionList()) {
             if (comparePermissionString(access, permission)) {
                 if(access.startsWith("-")){
                     return null;
@@ -407,8 +391,8 @@ public class AnjoPermissionsHandler extends Control {
      * @return the node if permission is found. if not found, return null
      */
     public String checkGroupOnlyPermission(Group group, String permission) {
-        Collections.sort(group.permissions, new StringPermissionComparator());
-        for (String access : group.permissions) {
+        group.sortPermissions();
+        for (String access : group.getPermissionList()) {
             if (comparePermissionString(access, permission)) {
                 if(access.startsWith("-")){
                     return null;
@@ -533,18 +517,15 @@ public class AnjoPermissionsHandler extends Control {
         if (alreadyChecked.contains(start)) {
             return null;
         }
-        //System.out.println("Testing permission inh group "+start.getName());
-        Collections.sort(start.permissions, new StringPermissionComparator());
-        for (String availablePerm : start.permissions) {
+        start.sortPermissions();
+        for (String availablePerm : start.getPermissionList()) {
             if (comparePermissionString(availablePerm, permission)) {
-                //System.out.println("WIN!");
                 if(availablePerm.startsWith("-")){
                     return null;
                 }
                 return start;
             }
         }
-        //System.out.println("FAIL!");
         alreadyChecked.add(start);
         for (String inherited : start.getInherits()) {
             Group groupInh = ph.getGroup(inherited);
@@ -553,7 +534,6 @@ public class AnjoPermissionsHandler extends Control {
                 return result;
             }
         }
-        //System.out.println("No more to check!");
         return null;
     }
 
@@ -582,7 +562,6 @@ public class AnjoPermissionsHandler extends Control {
                 listAllGroupsInherited(g, alreadyChecked);
             }
         }
-        //System.out.println("No more to check!");
         return alreadyChecked;
     }
 
@@ -613,35 +592,26 @@ public class AnjoPermissionsHandler extends Control {
         }
 
 
-        //System.out.println("Comparing acess "+userAcessLevel+" with "+fullPermissionName);
         StringTokenizer levelATokenizer = new StringTokenizer(userAcessLevel, ".");
         StringTokenizer levelBTokenizer = new StringTokenizer(fullPermissionName, ".");
         while (levelATokenizer.hasMoreTokens() && levelBTokenizer.hasMoreTokens()) {
             String levelA = levelATokenizer.nextToken();
             String levelB = levelBTokenizer.nextToken();
-            //System.out.println("Comparing tokens "+levelA+" with "+ levelB);
             if (levelA.contains("*")) {
-                //System.out.println("WIN");
                 return true;
             }
             if (levelA.equalsIgnoreCase(levelB)) {
                 if (!levelATokenizer.hasMoreTokens() && !levelBTokenizer.hasMoreTokens()) {
-                    //System.out.println("WIN");
                     return true;
                 }
-                //System.out.println("NEXT");
                 continue;
             } else {
-                //System.out.println("FAIL");
                 return false;
             }
 
         }
-        //System.out.println("FAIL");
         return false;
     }
-
-    @Override
     public String[] getGroups(String userName) {
         ArrayList<String> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
         String[] arr = new String[listAllGroupsInherited.size()];

@@ -1,26 +1,18 @@
-package com.nijiko.permissions;
+package org.anjocaido.groupmanager.permissions;
 
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Player;
 
 /**
+ *  Made by Nijikokun. Changed by Gabriel Couto
+ * 
+ * This class is intended to *read* permissions from a single world.
  *
- * @author gabrielcouto
+ * @author Nijikokun
+ * @author Gabriel Couto
  */
-public abstract class PermissionHandler {
+public abstract class PermissionsReaderInterface {
 
-    /**
-     *
-     */
-    public PermissionHandler() {
-        //compiled code
-        //throw new RuntimeException("Compiled Code");
-    }
-
-    /**
-     *
-     */
-    public abstract void load();
 
     /**
      *

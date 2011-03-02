@@ -4,7 +4,7 @@
  */
 package org.anjocaido.groupmanager.data;
 
-import org.anjocaido.groupmanager.dataholder.DataHolder;
+import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,10 +17,8 @@ import java.util.Set;
  *
  * @author gabrielcouto
  */
-public class Group implements Cloneable {
+public class Group extends DataUnit implements Cloneable {
 
-    private DataHolder source;
-    private String name;
     /**
      * The group it inherits DIRECTLY!
      */
@@ -31,55 +29,13 @@ public class Group implements Cloneable {
      * or build = false
      */
     private GroupVariables variables = new GroupVariables(this);
-    /**
-     * These are the complete name of the permissions nodes
-     * like essentials.motd
-     * or essentials.admin.kill
-     *
-     */
-    public ArrayList<String> permissions = new ArrayList<String>();
 
     /**
      *
      * @param name
      */
-    public Group(DataHolder source, String name) {
-        this.source = source;
-        this.name = name;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     *  Every group is matched only by their names and DataSources.
-     * @param o
-     * @return true if they are equal. false if not.
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof Group) {
-            Group go = (Group) o;
-            if (this.getName().equalsIgnoreCase(go.getName()) && this.getDataSource() == go.getDataSource()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     *
-     * @return
-     */
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 83 * hash + (this.name != null ? this.name.hashCode() : 0);
-        return hash;
+    public Group(WorldDataHolder source, String name) {
+        super(source,name);
     }
 
     /**
@@ -88,10 +44,13 @@ public class Group implements Cloneable {
      */
     @Override
     public Group clone() {
-        Group clone = new Group(getDataSource(), name);
+        Group clone = new Group(getDataSource(), this.getName());
         clone.inherits = ((ArrayList<String>) this.getInherits().clone());
-        clone.permissions = (ArrayList<String>) this.permissions.clone();
+        for(String perm: this.getPermissionList()){
+            clone.addPermission(perm);
+        }
         clone.variables = ((GroupVariables) variables).clone(clone);
+        clone.flagAsChanged();
         return clone;
     }
 
@@ -100,14 +59,17 @@ public class Group implements Cloneable {
      * @param dataSource
      * @return
      */
-    public Group clone(DataHolder dataSource) {
-        if (dataSource.groupExists(name)) {
+    public Group clone(WorldDataHolder dataSource) {
+        if (dataSource.groupExists(this.getName())) {
             return null;
         }
-        Group clone = getDataSource().createGroup(name);
+        Group clone = getDataSource().createGroup(this.getName());
         clone.inherits = ((ArrayList<String>) this.getInherits().clone());
-        clone.permissions = (ArrayList<String>) this.permissions.clone();
+        for(String perm: this.getPermissionList()){
+            clone.addPermission(perm);
+        }
         clone.variables = variables.clone(clone);
+        clone.flagAsChanged(); //use this to make the new dataSource save the new group
         return clone;
     }
 
@@ -125,28 +87,22 @@ public class Group implements Cloneable {
      * @param inherits the inherits to set
      */
     public void addInherits(Group inherit) {
-        //System.out.println("Adding inheritance:" + inherit.getName()+ "for "+ this.getName());
-        if (!source.groupExists(inherit.getName())) {
+        if (!this.getDataSource().groupExists(inherit.getName())) {
             getDataSource().addGroup(inherit);
         }
         if (!inherits.contains(inherit.getName().toLowerCase())) {
             inherits.add(inherit.getName().toLowerCase());
         }
+        flagAsChanged();
     }
 
     public boolean removeInherits(String inherit) {
         if (this.inherits.contains(inherit.toLowerCase())) {
             this.inherits.remove(inherit.toLowerCase());
+            flagAsChanged();
             return true;
         }
         return false;
-    }
-
-    /**
-     * @return the source
-     */
-    public DataHolder getDataSource() {
-        return source;
     }
 
     /**
@@ -161,6 +117,11 @@ public class Group implements Cloneable {
      * @param varList
      */
     public void setVariables(Map<String, Object> varList) {
-        variables = new GroupVariables(this, varList);
+        GroupVariables temp = new GroupVariables(this, varList);
+        variables.clearVars();
+        for(String key: temp.getVarKeyList()){
+            variables.addVar(key, temp.getVarObject(key));
+        }
+        flagAsChanged();
     }
 }

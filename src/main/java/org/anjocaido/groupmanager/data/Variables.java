@@ -19,9 +19,12 @@ import java.util.Set;
  * @author gabrielcouto
  */
 public abstract class Variables implements Cloneable {
-
+    private DataUnit owner;
     protected Map<String, Object> variables = new HashMap<String, Object>();
 
+    public Variables(DataUnit owner){
+        this.owner = owner;
+    }
     /**
      * Add var to the the INFO node.
      * examples:
@@ -38,6 +41,7 @@ public abstract class Variables implements Cloneable {
             variables.remove(name);
         }
         variables.put(name, o);
+        owner.flagAsChanged();
     }
 
     /**
@@ -145,10 +149,9 @@ public abstract class Variables implements Cloneable {
     public void removeVar(String name) {
         try {
             variables.remove(name);
-
-
         } catch (Exception e) {
         }
+        owner.flagAsChanged();
     }
 
     public static Object parseVariableValue(String value) {
@@ -169,5 +172,21 @@ public abstract class Variables implements Cloneable {
         }
         return value;
 
+    }
+
+    public void clearVars(){
+        variables.clear();
+        owner.flagAsChanged();
+    }
+
+    /**
+     * @return the owner
+     */
+    public DataUnit getOwner() {
+        return owner;
+    }
+
+    public boolean isEmpty(){
+        return variables.isEmpty();
     }
 }

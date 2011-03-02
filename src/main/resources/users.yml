@@ -1,0 +1,20 @@
+users:
+    anjocaido:
+        group: Admins
+        info:
+            prefix: '&c'
+            suffix: King
+        permissions: []
+    gmcouto:
+        group: SemiAdmin
+        info:
+            prefix: '&c'
+            suffix: SemiKing
+        permissions: []
+    zenexer:
+        group: Moderator
+        info:
+            prefix: '&c'
+            suffix: Mod
+        permissions:
+        - essentials.god

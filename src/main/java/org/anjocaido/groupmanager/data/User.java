@@ -4,7 +4,7 @@
  */
 package org.anjocaido.groupmanager.data;
 
-import org.anjocaido.groupmanager.dataholder.DataHolder;
+import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -12,10 +12,8 @@ import java.util.Map;
  *
  * @author gabrielcouto
  */
-public class User implements Cloneable {
+public class User extends DataUnit implements Cloneable {
 
-    private DataHolder source;
-    private String name;
     /**
      *
      */
@@ -26,52 +24,15 @@ public class User implements Cloneable {
      * or build = false
      */
     private UserVariables variables = new UserVariables(this);
-    /**
-     *
-     */
-    public ArrayList<String> permissions = new ArrayList<String>();
+    
 
     /**
      *
      * @param name
      */
-    public User(DataHolder source, String name) {
-        this.source = source;
-        this.name = name.toLowerCase();
-        this.group = group;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * 
-     * @return
-     */
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 11 * hash + (this.name != null ? this.name.hashCode() : 0);
-        return hash;
-    }
-
-    /**
-     *
-     * @param o
-     * @return
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof User) {
-            if (this.getName().equalsIgnoreCase(((User) o).getName())) {
-                return true;
-            }
-        }
-        return false;
+    public User(WorldDataHolder source, String name) {
+        super(source,name);
+        this.group = source.getDefaultGroup().getName();
     }
 
     /**
@@ -80,30 +41,36 @@ public class User implements Cloneable {
      */
     @Override
     public User clone() {
-        User clone = new User(getDataSource(), this.name);
+        User clone = new User(getDataSource(), this.getName());
         clone.setGroup(this.getGroup());
-        clone.permissions = (ArrayList<String>) this.permissions.clone();
+        for(String perm: this.getPermissionList()){
+            clone.addPermission(perm);
+        }
         //clone.variables = this.variables.clone();
+        clone.flagAsChanged();
         return clone;
     }
 
     /**
-     * Use this to deliver a user from one DataHolder to another
+     * Use this to deliver a user from one WorldDataHolder to another
      * @param dataSource
      * @return null if given dataSource already contains the same user
      */
-    public User clone(DataHolder dataSource) {
-        if (dataSource.isUserDeclared(name)) {
+    public User clone(WorldDataHolder dataSource) {
+        if (dataSource.isUserDeclared(this.getName())) {
             return null;
         }
-        User clone = dataSource.createUser(name);
+        User clone = dataSource.createUser(this.getName());
         if (dataSource.getGroup(group) == null) {
             clone.setGroup(dataSource.getDefaultGroup());
         } else {
             clone.setGroup(this.getGroupName());
         }
-        clone.permissions = (ArrayList<String>) this.permissions.clone();
+        for(String perm: this.getPermissionList()){
+            clone.addPermission(perm);
+        }
         //clone.variables = this.variables.clone();
+        clone.flagAsChanged();
         return clone;
     }
 
@@ -132,24 +99,18 @@ public class User implements Cloneable {
      */
     public void setGroup(String group) {
         this.group = group;
+        flagAsChanged();
     }
 
     /**
      * @param group the group to set
      */
     public void setGroup(Group group) {
-        if (!source.groupExists(group.getName())) {
+        if (!this.getDataSource().groupExists(group.getName())) {
             getDataSource().addGroup(group);
         }
         this.group = group.getName();
-    }
-
-    /**
-     * The DataHolder that contains this user
-     * @return the source
-     */
-    public DataHolder getDataSource() {
-        return source;
+        flagAsChanged();
     }
 
     /**
@@ -164,6 +125,11 @@ public class User implements Cloneable {
      * @param varList
      */
     public void setVariables(Map<String, Object> varList) {
-        variables = new UserVariables(this, varList);
+        UserVariables temp = new UserVariables(this, varList);
+        variables.clearVars();
+        for(String key: temp.getVarKeyList()){
+            variables.addVar(key, temp.getVarObject(key));
+        }
+        flagAsChanged();
     }
 }
