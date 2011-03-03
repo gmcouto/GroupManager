@@ -1,0 +1,463 @@
+BUKIT FORUM THREAD COPY
+-----------------------
+[B]GroupManager[/B] - The Permissions 2.x plugin sucessor.
+[B]Version:[/B] v1.0 pre-alpha-2
+
+Yes, it has multiworld support now. When 1.0 final release, next step is database (SQLite/MySQL).
+
+Note 0: All Permissions 2.0 plugins maintain the same compatibility they made for Permissions 2.1+.
+
+Note 1: This is an alpha release, it's for testing purposes only. It is for developers have time to make changes for the new multiworld system. I hate having to refactor, but I did a lot of it this time.
+Every plugin that depends directly on GroupManager will break. (sorry!)
+But is for a good causeÉ a permanent one.
+
+[B]NOTE 2: This is an alpha version(again!). The support for plugins [u]that uses directly Permissions 2.1+[/u] might not work properly in some very particular cases. Like if they changes permissions during the game(ex: a jail system changing group when you jail them)[/B]
+This problem will not occur with most Permissions 2.1+ plugins, and sure will not occur with GroupManager plugins.
+
+---
+
+As the growth of this plugin is getting faster and faster, I needed to put multiword support the soon as I could.
+Now it's here. And GroupManager is keeping all of it's good stuff! Did I say it is going to bring a lot more of new stuff too?
+
+[B]Purpose of the plugin:[/B]
+The purpose has changed. Permissions got better. But it still not enough. Why I did, and keep doing this?
+I started it thinking that it would make me happy. Now it's because it will make YOU happy.
+
+[B]Advantages against Permissions:[/B]
+¥ Full command list to change anything during game or thru the console.
+¥ Good API to change things. You to change a player group you can do getPlayer(name).setGroup(getGroup(name))
+¥ Exception nodes.
+¥ It separates groups files from users files.
+
+[B]New Features:[/B]
+¥ Multiworld support (yay!).
+¥ It has world permission mirroring(you can make a world nether having the same permissions of world2 instead of default world1).
+¥ It saves only the files that will have contents changed.
+¥ It separates groups files from users files.
+¥ It cleans old backup files older than 24h.
+
+[B]Previous Features(included):[/B]
+¥ It has the same file format as Permissions, no need to get used with anything new.
+¥ It comes with a fake Permissions plugin, that attaches GroupManager to all your permissions dependent plugins. No need to make any changes, nor update other plugins. Just adjust your permissions files and GO!
+¥ Commands to change users permissions are REALLY on-the-fly(no touching files).
+¥ It saves the permissions data periodically.
+¥ It backups every file before overwrites.
+¥ Tons of commands for complete user/group/permission management during game/console.
+¥ It has a fantastic temporary permissions system, that let's you to make changes in users, with the possibility to go back at any time(and it never is saved on files).
+¥ Negative nodes(aka '-'): You can take off specific permissions from users that have a full set.
+¥ Exception node(aka '+'): Used when a user/group has a set of negative nodes, and you want to allow a specific one. 
+
+[B]World mirroring:[/B] a brief explanation
+Let's say you have a config file like this:
+[CODE]settings:
+  data:
+    save:
+      minutes: 10
+  logging:
+    level: INFO
+  permission:
+    world:
+      mirror:
+        world1:
+          - world2
+          - world3
+        world4:
+          - world5[/CODE]
+It means that all your permissions of world2, and world3 will be the same of world1. And it means all permissions of world5 will be the same of world4.
+It won't copy any file. In fact, it won't matter if there is files for world2É when the permissions get load, every request for world2 will be redirected for world3. Simple as that.
+
+If no mirroring is specified, any world not loaded will automatically mirror the default world of the server.
+
+[B]File structure:[/B] a brief explanation
+The files read for GroupManager 1.0+ for data management are two files per world. The users file are [i]users.yml[/i]. The groups file are [i]groups.yml[/i].
+The thing is that those files are located in:
+plugins/GroupManager/worlds/[i]WORLDNAME[/i]
+
+So the file structure for the world called [i]anjoCaidoWorld[/i] and [i]netherWorld[/i] will be:
+[i]plugins/GroupManager/worlds/anjoCaidoWorld/groups.yml[/i]
+[i]plugins/GroupManager/worlds/anjoCaidoWorld/users.yml[/i]
+[i]plugins/GroupManager/worlds/netherWorld/groups.yml[/i]
+[i]plugins/GroupManager/worlds/netherWorld/users.yml[/i]
+
+The files might look like this:
+groups.yml
+[CODE]groups:
+    Admins:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - SemiAdmin
+        permissions:
+        - '*'
+    Default:
+        default: true
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance: []
+        permissions:
+        - essentials.spawn
+        - essentials.motd
+        - essentials.help
+        - essentials.home
+        - essentials.sethome
+    Moderator:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - Default
+        permissions:
+        - essentials.tp
+        - essentials.tphere
+        - essentials.item
+        - essentials.give
+    SemiAdmin:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        - Moderator
+        permissions:
+        - +groupmanager.mandemote
+        - +groupmanager.manpromote
+        - -groupmanager.*
+        - '*'[/CODE]
+users.yml
+[CODE]users:
+    anjocaido:
+        group: Admins
+        info:
+            prefix: '&c'
+            suffix: King
+        permissions: []
+    gmcouto:
+        group: SemiAdmin
+        info:
+            prefix: '&c'
+            suffix: SemiKing
+        permissions: []
+    zenexer:
+        group: Moderator
+        info:
+            prefix: '&c'
+            suffix: Mod
+        permissions:
+        - essentials.god[/CODE]
+You can see that the node structure are exactly the same used for GroupManager 0.99d(-) and Permissions, it means you can use the same files here.
+[B]Note: Every node that doesn't make part of the respective file is ignored. So if you are migrating from older GroupManager or Permissions you can just duplicate your files as groups.yml and users.yml. When comes the time where is needed to save the file, all unused data for each file will be discarded. So you don't need to split files, just duplicate them with correct names, it will work.[/b]
+
+[B]Negative and Exception nodes:[/B] a brief explanation
+Let's say you have a group SemiAdmin like this.
+[CODE]groups:
+  SemiAdmin:
+    default: false
+    permissions: [+groupmanager.manpromote, -groupmanager.*,
+      '*']
+    inheritance: [Moderator]
+    info: {prefix: '', build: false, suffix: ''}[/CODE]
+You should read this way:
+'*' -> means this group will have access to all commands.
+'-groupmanager.*' -> Where all his commands of groupmanager where [b]removed[/b].
+'+groupmanager.manpromote' -> [b]Except[/b] manpromote.
+
+It means he can do everything that is not of GroupManager, AND manpromote.
+
+It's like listing essentials.*, worldedit.*, worldprotect.*, everyotherthing.* and groupmanager.manpromote.
+
+It gives a very big flexibility on permissions.
+
+Note:
+For every level of inheritance,
+Every permission starting with '+' is tested first. Then comes permissions starting with '-'. Then comes normal permissions(including '*').
+
+[B]Commands[/B]:
+¥ Now on multiword support, every command will act only on the selected world.
+¥ If none/invalid world is selected, it will run on the default world.
+¥ If the world selected is a mirrored world, it will work on the mirror world.
+(on next version, when a command involves a player, there will be a toggle that will automatically act on the victim(player) world is in)
+[CODE]commands:
+  manuadd:
+    description: Change player group to one desired.
+    usage: /<command> <player> <group>
+  manudel:
+    description: Take user to default group. Removes user specific permissions.
+    usage: /<command> <player>
+  mangadd:
+    description: Add group to the system.
+    usage: /<command> <group>
+  mangdel:
+    description: Removes group from the system(all it's users become default)
+    usage: /<command> <group>
+  manuaddp:
+    description: Add permission diretly to the player.
+    usage: /<command> <player> <permission>
+  manudelp:
+    description: Removes permission diretly from the player.
+    usage: /<command> <player> <permission>
+  manulistp:
+    description: List all permissions from a player.
+    usage: /<command> <player>
+  manucheckp:
+    description: Verify if user has a permission, and where it comes from.
+    usage: /<command> <player> <permission>
+  mangaddp:
+    description: Add permission to a group.
+    usage: /<command> <group> <permission>
+  mangdelp:
+    description: Removes permission from a group.
+    usage: /<command> <group> <permission>
+  manglistp:
+    description: Lists all permissions from a group.
+    usage: /<command> <group>
+  mangcheckp:
+    description: Check if group has a permission, and where it comes from.
+    usage: /<command> <group> <permission>
+  mangaddi:
+    description: Add a group to another group inheritance list.
+    usage: /<command> <group1> <group2>
+  mangdeli:
+    description: Remove a group from another group inheritance list.
+    usage: /<command> <group1> <group2>
+  manuaddv:
+    description: Add, or replaces, a variable to a user (like prefix or suffix).
+    usage: /<command> <user> <variable> <value>
+  manudelv:
+    description: Remove a variable from a user.
+    usage: /<command> <user> <variable>
+  manulistv:
+    description: List variables a user has (like prefix or suffix).
+    usage: /<command> <user>
+  manucheckv:
+    description: Verify a value of a variable of user, and where it comes from.
+    usage: /<command> <user> <variable>
+  mangaddv:
+    description: Add, or replaces, a variable to a group (like prefix or suffix).
+    usage: /<command> <group> <variable> <value>
+  mangdelv:
+    description: Remove a variable from a group.
+    usage: /<command> <group> <variable>
+  manglistv:
+    description: List variables a group has (like prefix or suffix).
+    usage: /<command> <group>
+  mangcheckv:
+    description: Verify a value of a variable of group, and where it comes from.
+    usage: /<command> <group> <variable>
+  manwhois:
+     description: Tell the group that user belongs.
+     usage: /<command> <player>
+  tempadd:
+    description: Creates a temporary permission copy for that user.
+    usage: /<command> <player>
+  tempdel:
+    description: Remove the temporary permission copy for player.
+    usage: /<command> <player>
+  templist:
+    description: List players in overload-permissions mode made by /tempadd.
+    usage: /<command>
+  tempdelall:
+    description: Remove all overrides made by command /tempadd.
+    usage: /<command>
+  mansave:
+    description: Save all permissions on file.
+    usage: /<command>
+  manload:
+    description: Reload current world. Or load given world.
+    usage: /<command> [world]
+  listgroups:
+    description: List the groups available.
+    usage: /<command>
+  manpromote:
+    description: Promote a player in the same heritage line to a higher rank.
+    usage: /<command> <player> <group>
+  mandemote:
+    description: Demote a player in the same heritage line to a lower rank.
+    usage: /<command> <player> <group>
+  mantogglevalidate:
+    description: Toggle on/off the validating if player is online.
+    usage: /<command>
+  mantogglesave:
+    description: Toggle on/ff the autosave.
+    usage: /<command>
+  manworld:
+    description: Prints the selected world name
+    usage: /<command>
+  manselect:
+    description: Select a world to work with next commands.
+    usage: /<command> <world>
+  manclear:
+    description: Clear world selection. Next commands will work on your world.
+    usage: /<command>[/CODE]
+
+All commands that changes permissions only allow you to change users below in a inheritance level(eg. Admins can't mod other Admins, but can modify Moderators).
+Except for Console, he can modify anyone.
+
+All of these commands use permission:
+[QUOTE]groupmanager.<command>[/QUOTE]
+
+[B]So, what happens with all of these plugins that already use Permissions?[/B]
+They will still work. I made a fake Permissions plugin, that will replace your old Permissions plugin. And the new fake one will attach directly on GroupManager system. So all plugins will think they are working with Permissions, but they will work with GroupManager.
+The most incredible thing is that all those plugins will receive the benefit of instant changes.
+
+[B]I'm a server Administrator, what should I do to use it?[/B]
+If you already have Permissions, do this:
+	1.	Remove Permissions.jar from you plugins folder. (leave the Permissions folder there, if it is named diferently than this, the automatic import will not work)
+	2.	Paste GroupManager.jar with FakePermissions.jar on your plugins folder.
+	3.	Run.
+	4.	With all file structure done, you create your worlds folder and copy your files there.
+
+All your old plugins will still work like a charm.
+
+[B]I'm a plugin developer, how should I use this plugin?[/B]
+You can read the java-doc, linked below. It's not complete yet, but it has the essential.
+Here is some code examples...
+
+Loading in your plugin:
+[CODE]import org.anjocaido.groupmanager.GroupManager;
+import org.anjocaido.groupmanager.dataholder.worlds.WorldsHolder;
+import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
+public void onEnable() {
+        Plugin p = this.getServer().getPluginManager().getPlugin("GroupManager");
+        if (p != null) {
+            if (!this.getServer().getPluginManager().isPluginEnabled(p)) {
+                this.getServer().getPluginManager().enablePlugin(p);
+            }
+            GroupManager gm = (GroupManager) p;
+            WorldsHolder wd = getWorldsHolder();
+        } else {
+            this.getPluginLoader().disablePlugin(this);
+        }
+    }[/CODE]
+WorldsHolder contains everything you need. You can easily do anything with it.
+
+Here is a example of a plugin that in a special circumstance, needed to put the player in a special group, with no permissions at all.
+[CODE]public void markAsNotLoggedIn(Player player) {
+            OverloadedWorldHolder perm = gm.getWorldsHolder().getWorldData(player);
+            Group lockDown = perm.getGroup("NotLoggedIn");
+            if(lockDown == null){
+                lockDown = perm.createGroup("NotLoggedIn");
+            }
+            perm.overloadUser(player.getName());
+            perm.getUser(player.getName()).setGroup(lockDown);
+    }[/CODE]From now on the user is in this special group. And every change on him is temporary. Until the code below is executed.
+[CODE]public void restorePermissions(Player player){
+            OverloadedWorldHolder perm = gm.getWorldsHolder().getWorldData(player);
+            perm.removeOverload(player.getName());
+    }[/CODE]
+
+And, finally, how to check a user permission:
+[CODE]public boolean canChangeGroup(Player player){
+Ê Ê Ê Ê Ê Ê return gm.getWorldsHolder().getWorldPermissions(player).has(player,"groupmanager.mangroup");
+Ê Ê }[/CODE]
+
+[B]F.A.Q.[/B]
+¥ [B]Q[/B]: It is compatible with permissions... but where it get it's data from?
+- A: It gets from users.yml and groups.yml in the world folder, located properly inside GroupManager worlds folder.
+¥ [B]Q:[/B] Can I use commands from other plugins to change permissions?
+- A: No. I made the decision to store data in GroupManager folder because I don't think it is right my plugin mess around with other ones files. Unfortunately, other plugins of group modification tries to access other files than mine.
+
+[B]Changelog:[/B]
+[B]Version[/B] [B]1.0 pre-alpha-2[/B]:
+¥ World selection is optional, except for console.
+¥ Not selecting a world makes it run on same world of the command sender.
+¥ Fixed "temporary permissions" system.
+¥ Fixed most of commands bugs(I fixed all errors I could see)
+¥ Fake Permissions says it's 2.5 now, so plugins like HeroChat works now(yay).
+¥ Fixed some unnecessary file saves.
+¥ Added /manclear to clear selection
+¥ /manselect now lists physical worlds if no parameters are given.
+¥ /manload can load a world not loaded before, if given a parameter.
+[SPOILER]
+[B]Version[/B] 1.0 pre-alpha:
+¥ Refactored a lot of things. Please check the java-docs.
+¥ Added multiworld support.
+¥ Split files in users.yml and data.yml
+¥ Saves only files that needs changes
+¥ Fixed some bugs
+¥ World mirroring
+¥ Basic commands for world selection, to keep old commands working.
+[B]Version[/B] 0.99d:
+¥ Fixed more small bugs.
+¥ Saves in human readable format
+¥ Deletes backups older than 24 hours
+[B]Version[/B] 0.99c:
+¥ Fixed small bugs. Like /mangaddi
+¥ Changed some classes package
+[B]Version[/B] 0.99b:
+¥ Fixed Group Variables, that I broke last version.(restore your backups, yay)
+[B]Version[/B] 0.99a:
+¥ User specific variables. Prefixes, Suffixes and more.
+¥ Negative permission node(prevails normal nodes). Like '-groupmanager.*'
+¥ Exception permission node(prevails negative nodes). Like '+groupmanager.manpromote'
+[B]Version[/B] 0.9e:
+¥ It writes a template it self if doesn't find any data.yml file on the folder.
+[B]Version[/B] 0.9d:
+¥ FakePermissions adapted to new CB builds.
+[B]Version[/B] 0.9c:
+¥ Multiple inheritance fixed.
+¥ Added a command to toggle auto-saving, so you can edit the file while it is disabled.
+¥ Tested with server 1.3
+[B]Version[/B] 0.9b:
+¥ Now variables work with spaced strings.(you can add prefix with spaces)
+¥ Fixed some errors while loading files in later 400+ builds.
+¥ FakePermissions got small update.
+[B]Version[/B] 0.9:
+¥ Added variables manipulation command(things in info node, such as prefix, suffix, build, and custom ones)
+¥ Improved FakePermissions support for the Nijikokun's original one.
+¥ FakePermissions force loading of GroupManager before itself.
+[B]Version[/B] 0.8:
+¥ Added tons of commands. Resulting in a complete control, inside the game.
+¥ Renamed some commands in the same format Wulfspider sugested.
+¥ FakePermissions.jar updated to take care oc Misc field, which some Permissions plugins need.
+[B]Version[/B] 0.7:
+¥ Added commands /manpromote and /mandemote
+¥ Fixed a bug where a file with an empty permissions node in a group could fail the plugin to load.
+¥ now /addpermissions can only add permissions that the player have access.
+[B]Version[/B] 0.6c:
+¥ Removed the debugging messages that occurs while other plugins check permissions.
+¥ Removed the debugging messages on FakePermissions
+[B]Version[/B] 0.6b:
+¥ Fixed inheritance system I broke in 0.6. Sorry.
+[B]Version[/B] 0.6:
+¥ Fixed some bugs
+¥ User/Group class modelled in tiny different way(check JavaDocs)
+¥ Commands work on Console
+[B]Version[/B] 0.5:
+¥ First fully working release.
+[/SPOILER]
+
+[B]Future plans (they are closer than you think):[/B]
+¥ Make commands for cloning files, and world mirroring.
+¥ Implements Nijiko's interface for permission changing.
+¥ Make it work, optionally, with SQLite/MySQL(thinking of Persistence plugin, anyone with ideas?).
+
+[B]Downloads:[/B]
+Latest build:
+http://www.mdn.fm/files/272754_ag98l/GroupManager-1.0-pre-alpha-2.zip
+
+Java Doc:
+http://www.mdn.fm/files/272739_n9vbn/JavaDoc-GroupManager-1.0-pre-alpha-2.zip
+
+Version 0.99d:
+http://www.mdn.fm/files/271608_cfpn9/GroupManager-0.99d.zip
+
+Version 0.99c:
+http://www.mdn.fm/files/270340_vuz5z/GroupManager-0.99c.zip
+
+Plugins I love to use with GroupManager:
+Essentials, AntiGrief, iChat, MultiVerse, WorldEdit and WorldProtect.
+
+(I didn't test AntiGrief, WorldEdit and WorldProtect on 1.0 alpha, I anticipate that AntiGrief might not work because of my changes - please someone confirm this, or not)
+
+Source:
+https://github.com/gmcouto/GroupManager
+Fake Permissions Source:
+https://github.com/gmcouto/FakePermission
