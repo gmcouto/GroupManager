@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
+import org.anjocaido.groupmanager.GroupManager;
 import org.anjocaido.groupmanager.data.Group;
 import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import org.anjocaido.groupmanager.data.User;
@@ -635,11 +636,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         while (!stack.isEmpty()) {
             Group now = stack.pop();
             PermissionCheckResult resultNow = checkGroupOnlyPermission(now, targetPermission);
-            if (resultNow.resultType.equals(PermissionCheckResult.Type.EXCEPTION)
-                    && !resultNow.resultType.equals(PermissionCheckResult.Type.FOUND)) {
-                return resultNow;
-            }
-            if (resultNow.resultType.equals(PermissionCheckResult.Type.NEGATION)) {
+            if (!resultNow.resultType.equals(PermissionCheckResult.Type.NOTFOUND)) {
                 return resultNow;
             }
             for (String sonName : now.getInherits()) {
@@ -745,13 +742,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (userAcessLevel == null || fullPermissionName == null) {
             return false;
         }
+        GroupManager.logger.finest("COMPARING "+userAcessLevel+" WITH "+fullPermissionName);
 
         if (userAcessLevel.startsWith("+")) {
             userAcessLevel = userAcessLevel.substring(1);
         } else if (userAcessLevel.startsWith("-")) {
             userAcessLevel = userAcessLevel.substring(1);
         }
-        
+
         if (fullPermissionName.startsWith("+")) {
             fullPermissionName = fullPermissionName.substring(1);
         } else if (fullPermissionName.startsWith("-")) {
@@ -764,19 +762,25 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         while (levelATokenizer.hasMoreTokens() && levelBTokenizer.hasMoreTokens()) {
             String levelA = levelATokenizer.nextToken();
             String levelB = levelBTokenizer.nextToken();
+            GroupManager.logger.finest("ROUND "+levelA+" AGAINST "+levelB);
             if (levelA.contains("*")) {
+                GroupManager.logger.finest("WIN");
                 return true;
             }
             if (levelA.equalsIgnoreCase(levelB)) {
                 if (!levelATokenizer.hasMoreTokens() && !levelBTokenizer.hasMoreTokens()) {
+                    GroupManager.logger.finest("WIN");
                     return true;
                 }
+                GroupManager.logger.finest("NEXT");
                 continue;
             } else {
+                GroupManager.logger.finest("FAIL");
                 return false;
             }
 
         }
+        GroupManager.logger.finest("FAIL");
         return false;
     }
 
@@ -812,7 +816,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
             Group now = stack.pop();
             PermissionCheckResult resultNow = checkGroupOnlyPermission(now, targerPermission);
             if (resultNow.resultType.equals(PermissionCheckResult.Type.EXCEPTION)
-                    && !resultNow.resultType.equals(PermissionCheckResult.Type.FOUND)) {
+                    || resultNow.resultType.equals(PermissionCheckResult.Type.FOUND)) {
                 return now;
             }
             if (resultNow.resultType.equals(PermissionCheckResult.Type.NEGATION)) {

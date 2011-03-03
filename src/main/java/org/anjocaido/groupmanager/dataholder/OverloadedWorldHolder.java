@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.anjocaido.groupmanager.data.User;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 
 /**
  *

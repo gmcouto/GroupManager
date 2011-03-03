@@ -1,7 +1,6 @@
 package org.anjocaido.groupmanager.permissions;
 
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Player;
 
 /**
  *  Made by Nijikokun. Changed by Gabriel Couto

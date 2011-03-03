@@ -370,7 +370,7 @@ And, finally, how to check a user permission:
 ¥ Now using Breadth-first search for inheritance harvest. It guarantees that closer groups in inheritance are checked first.
 ¥ Fixed some bugs, where a negation node directly in a user could be ignored.
 ¥ Now it reads old data.yml and auto-install it to default world if none is found.
-¥ Created a system where plugins can get answers when they test a permission.
+¥ Created a system where plugins can get detailed answers from a permission check.
 ¥ Deprecated some inefficient methods(all of them redirects to the new efficient method), but they still works.
 [SPOILER]
 [B]Version[/B] 1.0 pre-alpha-2:
@@ -447,7 +447,7 @@ And, finally, how to check a user permission:
 ¥ Make it work, optionally, with SQLite/MySQL(thinking of Persistence plugin, anyone with ideas?).
 
 [B]Latest Build Download:[/B]
-http://www.mdn.fm/files/273149_zghmc/GroupManager-1.0-pre-alpha-3.zip
+http://www.mdn.fm/files/273437_lbjoi/GroupManager-1.0-pre-alpha-3.zip
 
 ===========================================
 [B]Other Downloads:[/B]
@@ -465,7 +465,6 @@ http://www.mdn.fm/files/270340_vuz5z/GroupManager-0.99c.zip
 Plugins I love to use with GroupManager:
 Essentials, AntiGrief, iChat, MultiVerse, WorldEdit and WorldProtect.
 
-(I didn't test AntiGrief, WorldEdit and WorldProtect on 1.0 alpha, I anticipate that AntiGrief might not work because of my changes - please someone confirm this, or not)
 
 ===========================================
 Source:
