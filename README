@@ -1,7 +1,7 @@
 BUKIT FORUM THREAD COPY
 -----------------------
 [B]GroupManager[/B] - The Permissions 2.x plugin sucessor.
-[B]Version:[/B] v1.0 pre-alpha-2
+[B]Version:[/B] v1.0 pre-alpha-3
 
 Yes, it has multiworld support now. When 1.0 final release, next step is database (SQLite/MySQL).
 
@@ -365,7 +365,15 @@ And, finally, how to check a user permission:
 - A: No. I made the decision to store data in GroupManager folder because I don't think it is right my plugin mess around with other ones files. Unfortunately, other plugins of group modification tries to access other files than mine.
 
 [B]Changelog:[/B]
-[B]Version[/B] [B]1.0 pre-alpha-2[/B]:
+[B]Version[/B] [B]1.0 pre-alpha-3[/B]:
+¥ Now /manucheckp and /mangcheckp tells you if the permission was negated by a negation node.
+¥ Now using Breadth-first search for inheritance harvest. It guarantees that closer groups in inheritance are checked first.
+¥ Fixed some bugs, where a negation node directly in a user could be ignored.
+¥ Now it reads old data.yml and auto-install it to default world if none is found.
+¥ Created a system where plugins can get answers when they test a permission.
+¥ Deprecated some inefficient methods(all of them redirects to the new efficient method), but they still works.
+[SPOILER]
+[B]Version[/B] 1.0 pre-alpha-2:
 ¥ World selection is optional, except for console.
 ¥ Not selecting a world makes it run on same world of the command sender.
 ¥ Fixed "temporary permissions" system.
@@ -375,7 +383,6 @@ And, finally, how to check a user permission:
 ¥ Added /manclear to clear selection
 ¥ /manselect now lists physical worlds if no parameters are given.
 ¥ /manload can load a world not loaded before, if given a parameter.
-[SPOILER]
 [B]Version[/B] 1.0 pre-alpha:
 ¥ Refactored a lot of things. Please check the java-docs.
 ¥ Added multiworld support.
@@ -439,24 +446,28 @@ And, finally, how to check a user permission:
 ¥ Implements Nijiko's interface for permission changing.
 ¥ Make it work, optionally, with SQLite/MySQL(thinking of Persistence plugin, anyone with ideas?).
 
-[B]Downloads:[/B]
-Latest build:
-http://www.mdn.fm/files/272754_ag98l/GroupManager-1.0-pre-alpha-2.zip
+[B]Latest Build Download:[/B]
+http://www.mdn.fm/files/273149_zghmc/GroupManager-1.0-pre-alpha-3.zip
 
+===========================================
+[B]Other Downloads:[/B]
 Java Doc:
-http://www.mdn.fm/files/272739_n9vbn/JavaDoc-GroupManager-1.0-pre-alpha-2.zip
+http://www.mdn.fm/files/273150_qjkb5/JavaDoc-GroupManager-1.0-pre-alpha-3.zip
 
+[B]Previous Versions:[/B]
 Version 0.99d:
 http://www.mdn.fm/files/271608_cfpn9/GroupManager-0.99d.zip
 
 Version 0.99c:
 http://www.mdn.fm/files/270340_vuz5z/GroupManager-0.99c.zip
 
+===========================================
 Plugins I love to use with GroupManager:
 Essentials, AntiGrief, iChat, MultiVerse, WorldEdit and WorldProtect.
 
 (I didn't test AntiGrief, WorldEdit and WorldProtect on 1.0 alpha, I anticipate that AntiGrief might not work because of my changes - please someone confirm this, or not)
 
+===========================================
 Source:
 https://github.com/gmcouto/GroupManager
 Fake Permissions Source:
