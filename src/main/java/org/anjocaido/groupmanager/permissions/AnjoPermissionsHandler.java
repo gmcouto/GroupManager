@@ -5,11 +5,13 @@
 package org.anjocaido.groupmanager.permissions;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 import org.anjocaido.groupmanager.data.Group;
 import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import org.anjocaido.groupmanager.data.User;
+import org.anjocaido.groupmanager.utils.PermissionCheckResult;
 import org.bukkit.entity.Player;
 
 /**
@@ -27,7 +29,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     WorldDataHolder ph = null;
 
     /**
-     *
+     * It needs a WorldDataHolder to work with.
      * @param holder
      */
     public AnjoPermissionsHandler(WorldDataHolder holder) {
@@ -35,7 +37,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * A short name method, for permission method.
      * @param player
      * @param permission
      * @return
@@ -46,7 +48,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     *  Checks if a player can use that permission node.
      * @param player
      * @param permission
      * @return
@@ -57,7 +59,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the name of the group of that player name.
      * @param userName
      * @return
      */
@@ -67,6 +69,16 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
+     *  Verify if player is in suck group.
+     * It will check it's groups inheritance.
+     *
+     * So if you have a group Admin > Moderator
+     *
+     * And verify the player 'MyAdmin', which is Admin, it will return true for both
+     * Admin or Moderator groups.
+     *
+     * Mas if you haave a player 'MyModerator', which is Moderator,
+     * it will give false if you pass Admin in group parameter.
      *
      * @param name
      * @param group
@@ -74,18 +86,17 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      */
     @Override
     public boolean inGroup(String name, String group) {
-
-        return searchGroupInInheritance(ph.getUser(name).getGroup(), group, null);
+        return hasGroupInInheritance(ph.getUser(name).getGroup(), group);
     }
 
     /**
-     *
-     * @param string
-     * @return
+     * Returns the String prefix for the given group
+     * @param groupName
+     * @return empty string if found none.
      */
     @Override
-    public String getGroupPrefix(String string) {
-        Group g = ph.getGroup(string);
+    public String getGroupPrefix(String groupName) {
+        Group g = ph.getGroup(groupName);
         if (g == null) {
             return null;
         }
@@ -93,13 +104,13 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
-     * @param string
+     * Return the suffix for the given group name
+     * @param groupName
      * @return
      */
     @Override
-    public String getGroupSuffix(String string) {
-        Group g = ph.getGroup(string);
+    public String getGroupSuffix(String groupName) {
+        Group g = ph.getGroup(groupName);
         if (g == null) {
             return null;
         }
@@ -108,12 +119,12 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
 
     /**
      *
-     * @param string
+     * @param groupName
      * @return
      */
     @Override
-    public boolean canGroupBuild(String string) {
-        Group g = ph.getGroup(string);
+    public boolean canGroupBuild(String groupName) {
+        Group g = ph.getGroup(groupName);
         if (g == null) {
             return false;
         }
@@ -121,18 +132,19 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
-     * @param group
+     * It returns a string variable value, set in the INFO node of the group.
+     * It will harvest inheritance for value.
+     * @param groupName
      * @param variable
-     * @return
+     * @return null if no group with that variable is found.
      */
     @Override
-    public String getGroupPermissionString(String group, String variable) {
-        Group start = ph.getGroup(group);
+    public String getGroupPermissionString(String groupName, String variable) {
+        Group start = ph.getGroup(groupName);
         if (start == null) {
             return null;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return null;
         }
@@ -140,18 +152,19 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
-     * @param group
+     *  It returns a Integer variable value
+     * It will harvest inheritance for value.
+     * @param groupName
      * @param variable
-     * @return
+     * @return -1 if none found or not parseable.
      */
     @Override
-    public int getGroupPermissionInteger(String group, String variable) {
-        Group start = ph.getGroup(group);
+    public int getGroupPermissionInteger(String groupName, String variable) {
+        Group start = ph.getGroup(groupName);
         if (start == null) {
             return -1;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return -1;
         }
@@ -159,10 +172,11 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     * 
+     * Returns a boolean for given variable in INFO node.
+     * It will harvest inheritance for value.
      * @param group
      * @param variable
-     * @return
+     * @return false if not found/not parseable.
      */
     @Override
     public boolean getGroupPermissionBoolean(String group, String variable) {
@@ -170,7 +184,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (start == null) {
             return false;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return false;
         }
@@ -178,10 +192,11 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns a double value for the given variable name in INFO node.
+     * It will harvest inheritance for value.
      * @param group
      * @param variable
-     * @return
+     * @return -1 if not found / not parseable.
      */
     @Override
     public double getGroupPermissionDouble(String group, String variable) {
@@ -189,7 +204,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (start == null) {
             return -1;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return -1;
         }
@@ -197,7 +212,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
      * @param user
      * @param variable
      * @return
@@ -212,7 +227,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
      * @param user
      * @param variable
      * @return
@@ -227,7 +242,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
      * @param user
      * @param variable
      * @return
@@ -242,7 +257,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
      * @param user
      * @param variable
      * @return
@@ -257,10 +272,12 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
-     * @param string
+     * Returns the variable value of the user, in INFO node.
+     * If not found, it will search for his Group variables.
+     * It will harvest the inheritance.
+     * @param user
      * @param variable
-     * @return
+     * @return empty string if not found
      */
     @Override
     public String getPermissionString(String user, String variable) {
@@ -268,14 +285,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (auser == null) {
             return "";
         }
-        if(auser.getVariables().hasVar(variable)){
+        if (auser.getVariables().hasVar(variable)) {
             return auser.getVariables().getVarString(variable);
         }
         Group start = auser.getGroup();
         if (start == null) {
             return "";
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return "";
         }
@@ -284,10 +301,12 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
+     * If not found, it will search for his Group variables.
+     * It will harvest the inheritance.
      * @param user
      * @param variable
-     * @return
+     * @return -1 if not found
      */
     @Override
     public int getPermissionInteger(String user, String variable) {
@@ -295,14 +314,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (auser == null) {
             return -1;
         }
-        if(auser.getVariables().hasVar(variable)){
+        if (auser.getVariables().hasVar(variable)) {
             return auser.getVariables().getVarInteger(variable);
         }
         Group start = auser.getGroup();
         if (start == null) {
             return -1;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return -1;
         }
@@ -311,10 +330,12 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
+     * If not found, it will search for his Group variables.
+     * It will harvest the inheritance.
      * @param user
-     * @param string1
-     * @return
+     * @param variable
+     * @return false if not found or not parseable to true.
      */
     @Override
     public boolean getPermissionBoolean(String user, String variable) {
@@ -322,14 +343,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (auser == null) {
             return false;
         }
-        if(auser.getVariables().hasVar(variable)){
+        if (auser.getVariables().hasVar(variable)) {
             return auser.getVariables().getVarBoolean(variable);
         }
         Group start = auser.getGroup();
         if (start == null) {
             return false;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return false;
         }
@@ -338,10 +359,12 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     *
+     * Returns the variable value of the user, in INFO node.
+     * If not found, it will search for his Group variables.
+     * It will harvest the inheritance.
      * @param user
      * @param variable
-     * @return
+     * @return -1 if not found.
      */
     @Override
     public double getPermissionDouble(String user, String variable) {
@@ -349,14 +372,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (auser == null) {
             return -1.0D;
         }
-        if(auser.getVariables().hasVar(variable)){
+        if (auser.getVariables().hasVar(variable)) {
             return auser.getVariables().getVarDouble(variable);
         }
         Group start = auser.getGroup();
         if (start == null) {
             return -1.0D;
         }
-        Group result = nextGroupWithVariable(start, variable, null);
+        Group result = nextGroupWithVariable(start, variable);
         if (result == null) {
             return -1.0D;
         }
@@ -370,86 +393,149 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      * @param permission
      * @return
      */
-    public String checkUserOnlyPermission(User user, String permission) {
+    public PermissionCheckResult checkUserOnlyPermission(User user, String permission) {
         user.sortPermissions();
+        PermissionCheckResult result = new PermissionCheckResult();
+        result.askedPermission = permission;
+        result.owner = user;
         for (String access : user.getPermissionList()) {
             if (comparePermissionString(access, permission)) {
-                if(access.startsWith("-")){
-                    return null;
+                result.accessLevel = access;
+                if (access.startsWith("-")) {
+                    result.resultType = PermissionCheckResult.Type.NEGATION;
+                } else if (access.startsWith("+")) {
+                    result.resultType = PermissionCheckResult.Type.EXCEPTION;
+                } else {
+                    result.resultType = PermissionCheckResult.Type.FOUND;
                 }
-                return access;
+                return result;
             }
         }
-        return null;
+        result.resultType = PermissionCheckResult.Type.NOTFOUND;
+        return result;
     }
 
     /**
      * Returns the node responsible for that permission.
      * Does not include User's group permission.
-     * @param user
+     * @param group
      * @param permission
      * @return the node if permission is found. if not found, return null
      */
-    public String checkGroupOnlyPermission(Group group, String permission) {
+    public PermissionCheckResult checkGroupOnlyPermission(Group group, String permission) {
         group.sortPermissions();
+        PermissionCheckResult result = new PermissionCheckResult();
+        result.owner = group;
+        result.askedPermission = permission;
         for (String access : group.getPermissionList()) {
             if (comparePermissionString(access, permission)) {
-                if(access.startsWith("-")){
-                    return null;
+                result.accessLevel = access;
+                if (access.startsWith("-")) {
+                    result.resultType = PermissionCheckResult.Type.NEGATION;
+                } else if (access.startsWith("+")) {
+                    result.resultType = PermissionCheckResult.Type.EXCEPTION;
+                } else {
+                    result.resultType = PermissionCheckResult.Type.FOUND;
                 }
-                return access;
+                return result;
             }
         }
-        return null;
+        result.resultType = PermissionCheckResult.Type.NOTFOUND;
+        return result;
     }
 
     /**
      * Check permissions, including it's group and inheritance.
      * @param user
      * @param permission
-     * @return
+     * @return true if permission was found. false if not, or was negated.
      */
     public boolean checkUserPermission(User user, String permission) {
-        if (user == null || permission == null) {
-            return false;
-        }
-        if (checkUserOnlyPermission(user, permission) != null) {
-            return true;
-        }
-        if (checkGroupPermissionWithInheritance(user.getGroup(), permission, null)) {
+        PermissionCheckResult result = checkFullUserPermission(user, permission);
+        if (result.resultType.equals(PermissionCheckResult.Type.EXCEPTION)
+                || result.resultType.equals(PermissionCheckResult.Type.FOUND)) {
             return true;
         }
         return false;
     }
 
     /**
+     * Do what checkUserPermission did before. But now returning a PermissionCheckResult.
+     * @param user
+     * @param targetPermission
+     * @return
+     */
+    public PermissionCheckResult checkFullUserPermission(User user, String targetPermission) {
+        PermissionCheckResult result = new PermissionCheckResult();
+        result.askedPermission = targetPermission;
+        result.resultType = PermissionCheckResult.Type.NOTFOUND;
+
+        if (user == null || targetPermission == null) {
+            return result;
+        }
+
+        PermissionCheckResult resultUser = checkUserOnlyPermission(user, targetPermission);
+        if (!resultUser.resultType.equals(PermissionCheckResult.Type.NOTFOUND)) {
+            return resultUser;
+
+        }
+
+        //IT ONLY CHECKS GROUPS PERMISSIONS IF RESULT FOR USER IS NOT FOUND
+        PermissionCheckResult resultGroup = checkGroupPermissionWithInheritance(user.getGroup(), targetPermission);
+        if (!resultGroup.resultType.equals(PermissionCheckResult.Type.NOTFOUND)) {
+            return resultGroup;
+        }
+
+        //THEN IT RETURNS A NOT FOUND
+        return result;
+    }
+
+    /**
      * Verifies if a given group has a variable. Including it's inheritance.
+     *
+     * it redirects to the other method now. This one was deprecated, and will
+     * be gone in a future release.
+     * 
      * @param start
      * @param variable
      * @param alreadyChecked
      * @return returns the closest inherited group with the variable.
+     * @deprecated use now nextGroupWithVariable(Group start, String targetVariable)
      */
+    @Deprecated
     public Group nextGroupWithVariable(Group start, String variable, List<Group> alreadyChecked) {
-        if (start == null || variable == null) {
+        return nextGroupWithVariable(start, variable);
+    }
+
+    /**
+     * Returns the next group, including inheritance, which contains that
+     * variable name.
+     *
+     * It does Breadth-first search
+     *
+     * @param start the starting group to look for
+     * @param targetVariable the variable name
+     * @return The group if found. Null if not.
+     */
+    public Group nextGroupWithVariable(Group start, String targetVariable) {
+        if (start == null || targetVariable == null) {
             return null;
         }
-        if (alreadyChecked == null) {
-            alreadyChecked = new ArrayList<Group>();
-        }
-        if (alreadyChecked.contains(start)) {
-            return null;
-        }
-        if (start.getVariables().hasVar(variable)) {
-            return start;
-        }
-
-        alreadyChecked.add(start);
-
-        for (String inherited : start.getInherits()) {
-            Group groupInh = ph.getGroup(inherited);
-            Group result = nextGroupWithVariable(groupInh, variable, alreadyChecked);
-            if (result != null) {
-                return result;
+        LinkedList<Group> stack = new LinkedList<Group>();
+        ArrayList<Group> alreadyVisited = new ArrayList<Group>();
+        stack.push(start);
+        alreadyVisited.add(start);
+        while (!stack.isEmpty()) {
+            Group now = stack.pop();
+            if (now.getVariables().hasVar(targetVariable)) {
+                return now;
+            }
+            for (String sonName : now.getInherits()) {
+                Group son = ph.getGroup(sonName);
+                if (son != null && !alreadyVisited.contains(son)) {
+                    stack.push(son);
+                    alreadyVisited.add(son);
+                }
             }
         }
         return null;
@@ -457,29 +543,49 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
 
     /**
      * Check if given group inherits another group.
+     *
+     * redirected to the other method. this is deprecated now. and will be gone
+     * in the future releases.
+     * 
      * @param start The group to start the search.
      * @param askedGroup Name of the group you're looking for
      * @param alreadyChecked groups to ignore(pass null on it, please)
      * @return true if it inherits the group.
+     * @deprecated prefer using hasGroupInInheritance(Group start, String askedGroup)
      */
+    @Deprecated
     public boolean searchGroupInInheritance(Group start, String askedGroup, List<Group> alreadyChecked) {
+        return hasGroupInInheritance(start, askedGroup);
+    }
+
+    /**
+     * Check if given group inherits another group.
+     *
+     * It does Breadth-first search
+     *
+     * @param start The group to start the search.
+     * @param askedGroup Name of the group you're looking for
+     * @return true if it inherits the group.
+     */
+    public boolean hasGroupInInheritance(Group start, String askedGroup) {
         if (start == null || askedGroup == null) {
             return false;
         }
-        if (alreadyChecked == null) {
-            alreadyChecked = new ArrayList<Group>();
-        }
-        if (alreadyChecked.contains(start)) {
-            return false;
-        }
-        if (start.getName().equalsIgnoreCase(askedGroup)) {
-            return true;
-        }
-        alreadyChecked.add(start);
-        for (String inherited : start.getInherits()) {
-            Group groupInh = ph.getGroup(inherited);
-            if (searchGroupInInheritance(groupInh, askedGroup, alreadyChecked)) {
+        LinkedList<Group> stack = new LinkedList<Group>();
+        ArrayList<Group> alreadyVisited = new ArrayList<Group>();
+        stack.push(start);
+        alreadyVisited.add(start);
+        while (!stack.isEmpty()) {
+            Group now = stack.pop();
+            if (now.getName().equalsIgnoreCase(askedGroup)) {
                 return true;
+            }
+            for (String sonName : now.getInherits()) {
+                Group son = ph.getGroup(sonName);
+                if (son != null && !alreadyVisited.contains(son)) {
+                    stack.push(son);
+                    alreadyVisited.add(son);
+                }
             }
         }
         return false;
@@ -490,49 +596,82 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      * @param start
      * @param permission
      * @param alreadyChecked
-     * @return
+     * @return true if PermissionCheckResult is EXCEPTION or FOUND
+     * @deprecated use the other checkGroupPermissionWithInheritance for everything
      */
+    @Deprecated
     public boolean checkGroupPermissionWithInheritance(Group start, String permission, List<Group> alreadyChecked) {
-        if (nextGroupWithPermission(start, permission, alreadyChecked) != null) {
+        PermissionCheckResult result = checkGroupPermissionWithInheritance(start, permission);
+        if (result.resultType.equals(result.resultType.EXCEPTION)
+                || result.resultType.equals(result.resultType.FOUND)) {
             return true;
         }
         return false;
     }
 
     /**
-     * Return the group that passes on the permission test. Checking whole
-     * inheritance chain.
+     * Returns the result of permission check. Including inheritance.
+     * If found anything, the PermissionCheckResult that retuns will
+     * include the Group name, and the result type.
+     * Result types will be EXCEPTION, NEGATION, FOUND.
+     *
+     * If returned type NOTFOUND, the owner will be null,
+     * and ownerType too.
+     *
+     * It does Breadth-first search
+     * 
+     * @param start
+     * @param targetPermission
+     * @return
+     */
+    public PermissionCheckResult checkGroupPermissionWithInheritance(Group start, String targetPermission) {
+        if (start == null || targetPermission == null) {
+            return null;
+        }
+        LinkedList<Group> stack = new LinkedList<Group>();
+        List<Group> alreadyVisited = new ArrayList<Group>();
+        stack.push(start);
+        alreadyVisited.add(start);
+        while (!stack.isEmpty()) {
+            Group now = stack.pop();
+            PermissionCheckResult resultNow = checkGroupOnlyPermission(now, targetPermission);
+            if (resultNow.resultType.equals(PermissionCheckResult.Type.EXCEPTION)
+                    && !resultNow.resultType.equals(PermissionCheckResult.Type.FOUND)) {
+                return resultNow;
+            }
+            if (resultNow.resultType.equals(PermissionCheckResult.Type.NEGATION)) {
+                return resultNow;
+            }
+            for (String sonName : now.getInherits()) {
+                Group son = ph.getGroup(sonName);
+                if (son != null && !alreadyVisited.contains(son)) {
+                    stack.push(son);
+                    alreadyVisited.add(son);
+                }
+            }
+        }
+        PermissionCheckResult result = new PermissionCheckResult();
+        result.askedPermission = targetPermission;
+        result.resultType = PermissionCheckResult.Type.NOTFOUND;
+        return result;
+    }
+
+    /**
+     * It uses checkGroupPermissionWithInheritance
+     * and cast the owner to Group type if result type was EXCEPTION or FOUND.
+     * 
      * @param start
      * @param permission
      * @param alreadyChecked
      * @return the group that passed on test. null if no group passed.
+     * @deprecated use checkGroupPermissionWithInheritance for everything now.
      */
+    @Deprecated
     public Group nextGroupWithPermission(Group start, String permission, List<Group> alreadyChecked) {
-        if (start == null || permission == null) {
-            return null;
-        }
-        if (alreadyChecked == null) {
-            alreadyChecked = new ArrayList<Group>();
-        }
-        if (alreadyChecked.contains(start)) {
-            return null;
-        }
-        start.sortPermissions();
-        for (String availablePerm : start.getPermissionList()) {
-            if (comparePermissionString(availablePerm, permission)) {
-                if(availablePerm.startsWith("-")){
-                    return null;
-                }
-                return start;
-            }
-        }
-        alreadyChecked.add(start);
-        for (String inherited : start.getInherits()) {
-            Group groupInh = ph.getGroup(inherited);
-            Group result = nextGroupWithPermission(groupInh, permission, alreadyChecked);
-            if (result != null) {
-                return result;
-            }
+        PermissionCheckResult result = checkGroupPermissionWithInheritance(start, permission);
+        if (result.resultType.equals(result.resultType.EXCEPTION)
+                || result.resultType.equals(result.resultType.FOUND)) {
+            return (Group) checkGroupPermissionWithInheritance(start, permission).owner;
         }
         return null;
     }
@@ -540,29 +679,48 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     /**
      * Return the group that passes on the permission test. Checking whole
      * inheritance chain.
+     *
+     * it now redirects to the other method. but get away from this one,
+     * it will disappear in a future release.
+     *
      * @param start
-     * @param permission
      * @param alreadyChecked
      * @return the group that passed on test. null if no group passed.
+     * @deprecated  use the other method with same name, instead
      */
+    @Deprecated
     public ArrayList<String> listAllGroupsInherited(Group start, ArrayList<String> alreadyChecked) {
+        return listAllGroupsInherited(start);
+    }
+
+    /**
+     * Return the group that passes on the permission test. Checking whole
+     * inheritance chain.
+     *
+     * It does Breadth-first search. So closer groups will appear first in list.
+     *
+     * @param start
+     * @return the group that passed on test. null if no group passed.
+     */
+    public ArrayList<String> listAllGroupsInherited(Group start) {
         if (start == null) {
             return null;
         }
-        if (alreadyChecked == null) {
-            alreadyChecked = new ArrayList<String>();
-        }
-        if (alreadyChecked.contains(start.getName())) {
-            return alreadyChecked;
-        }
-        alreadyChecked.add(start.getName());
-        for (String grp : start.getInherits()) {
-            Group g = ph.getGroup(grp);
-            if (g != null) {
-                listAllGroupsInherited(g, alreadyChecked);
+        LinkedList<Group> stack = new LinkedList<Group>();
+        ArrayList<String> alreadyVisited = new ArrayList<String>();
+        stack.push(start);
+        alreadyVisited.add(start.getName());
+        while (!stack.isEmpty()) {
+            Group now = stack.pop();
+            for (String sonName : now.getInherits()) {
+                Group son = ph.getGroup(sonName);
+                if (son != null && !alreadyVisited.contains(son.getName())) {
+                    stack.push(son);
+                    alreadyVisited.add(son.getName());
+                }
             }
         }
-        return alreadyChecked;
+        return alreadyVisited;
     }
 
     /**
@@ -573,8 +731,11 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      * Please sort permissions before sending them here. So negative tokens
      * get priority.
      *
-     * You must test if it start with negative after this, so you return
-     * the !result of this method.
+     * You must test if it start with negative outside this method. It will
+     * only tell if the nodes are matching or not.
+     *
+     * Every '-' or '+' in the beginning is ignored. It will match only
+     * node names.
      * 
      * @param userAcessLevel
      * @param fullPermissionName
@@ -585,10 +746,16 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
             return false;
         }
 
-        if(userAcessLevel.startsWith("+")){
+        if (userAcessLevel.startsWith("+")) {
             userAcessLevel = userAcessLevel.substring(1);
-        } else if(userAcessLevel.startsWith("-")){
+        } else if (userAcessLevel.startsWith("-")) {
             userAcessLevel = userAcessLevel.substring(1);
+        }
+        
+        if (fullPermissionName.startsWith("+")) {
+            fullPermissionName = fullPermissionName.substring(1);
+        } else if (fullPermissionName.startsWith("-")) {
+            fullPermissionName = fullPermissionName.substring(1);
         }
 
 
@@ -612,9 +779,53 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         }
         return false;
     }
+
+    /**
+     *
+     * @param userName
+     * @return
+     */
     public String[] getGroups(String userName) {
         ArrayList<String> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
         String[] arr = new String[listAllGroupsInherited.size()];
         return listAllGroupsInherited.toArray(arr);
+    }
+
+    /**
+     * A Breadth-first search thru inheritance model.
+     *
+     * Just a model to copy and paste.
+     * This will guarantee the closer groups will be checked first.
+     * @param start
+     * @param targerPermission
+     * @return
+     */
+    private Group breadthFirstSearch(Group start, String targerPermission) {
+        if (start == null || targerPermission == null) {
+            return null;
+        }
+        LinkedList<Group> stack = new LinkedList<Group>();
+        ArrayList<Group> alreadyVisited = new ArrayList<Group>();
+        stack.push(start);
+        alreadyVisited.add(start);
+        while (!stack.isEmpty()) {
+            Group now = stack.pop();
+            PermissionCheckResult resultNow = checkGroupOnlyPermission(now, targerPermission);
+            if (resultNow.resultType.equals(PermissionCheckResult.Type.EXCEPTION)
+                    && !resultNow.resultType.equals(PermissionCheckResult.Type.FOUND)) {
+                return now;
+            }
+            if (resultNow.resultType.equals(PermissionCheckResult.Type.NEGATION)) {
+                return null;
+            }
+            for (String sonName : now.getInherits()) {
+                Group son = ph.getGroup(sonName);
+                if (son != null && !alreadyVisited.contains(son)) {
+                    stack.push(son);
+                    alreadyVisited.add(son);
+                }
+            }
+        }
+        return null;
     }
 }

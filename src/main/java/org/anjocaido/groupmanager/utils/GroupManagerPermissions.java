@@ -44,5 +44,6 @@ public enum GroupManagerPermissions {
     mantogglevalidate,
     mantogglesave,
     manworld,
-    manselect
+    manselect,
+    manclear
 }

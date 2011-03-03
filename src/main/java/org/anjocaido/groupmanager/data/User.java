@@ -42,12 +42,12 @@ public class User extends DataUnit implements Cloneable {
     @Override
     public User clone() {
         User clone = new User(getDataSource(), this.getName());
-        clone.setGroup(this.getGroup());
+        clone.group = this.group;
         for(String perm: this.getPermissionList()){
             clone.addPermission(perm);
         }
         //clone.variables = this.variables.clone();
-        clone.flagAsChanged();
+        //clone.flagAsChanged();
         return clone;
     }
 

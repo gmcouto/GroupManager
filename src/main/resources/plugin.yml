@@ -1,5 +1,5 @@
 name: GroupManager
-version: 1.0(pre-alpha-dev)
+version: 1.0(pre-alpha-3)
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -92,8 +92,8 @@ commands:
     description: Save all permissions on file.
     usage: /<command>
   manload:
-    description: Reload permissions from file.
-    usage: /<command>
+    description: Reload current world. Or load given world.
+    usage: /<command> [world]
   listgroups:
     description: List the groups available.
     usage: /<command>
@@ -113,5 +113,8 @@ commands:
     description: Prints the selected world name
     usage: /<command>
   manselect:
-    description: Select a world with given name, or default world if none found.
+    description: Select a world to work with next commands.
     usage: /<command> <world>
+  manclear:
+    description: Clear world selection. Next commands will work on your world.
+    usage: /<command>

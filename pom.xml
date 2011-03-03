@@ -5,7 +5,7 @@
     <groupId>org.anjocaido</groupId>
     <artifactId>GroupManager</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-pre-alpha-SNAPSHOT</version>
+    <version>1.0-pre-alpha-3-SNAPSHOT</version>
     <name>GroupManager</name>
     <url>http://maven.apache.org</url>
     <build>

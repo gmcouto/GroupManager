@@ -34,6 +34,9 @@ import org.yaml.snakeyaml.reader.UnicodeReader;
  */
 public class WorldDataHolder {
 
+    /**
+     *
+     */
     protected String name;
 
     /**
@@ -50,19 +53,36 @@ public class WorldDataHolder {
     protected Group defaultGroup = null;
     /**
      * The file, which this class loads/save data from/to
+     * @deprecated
      */
     @Deprecated
     protected File f;
 
+    /**
+     *
+     */
     protected AnjoPermissionsHandler permissionsHandler;
+    /**
+     *
+     */
     protected File usersFile;
+    /**
+     *
+     */
     protected File groupsFile;
 
+    /**
+     *
+     */
     protected boolean haveUsersChanged = false;
+    /**
+     *
+     */
     protected boolean haveGroupsChanged = false;
 
     /**
      *  Prevent direct instantiation
+     * @param worldName
      */
     protected WorldDataHolder(String worldName) {
         name = worldName;
@@ -71,6 +91,7 @@ public class WorldDataHolder {
     /**
      * The main constructor for a new WorldDataHolder
      *  Please don't set the default group as null
+     * @param worldName
      * @param defaultGroup the default group. its good to start with one
      */
     public WorldDataHolder(String worldName, Group defaultGroup) {
@@ -127,6 +148,11 @@ public class WorldDataHolder {
         return false;
     }
 
+    /**
+     *
+     * @param userName
+     * @return
+     */
     public boolean isUserDeclared(String userName) {
         return users.containsKey(userName.toLowerCase());
     }
@@ -266,6 +292,7 @@ public class WorldDataHolder {
 
     /**
      * Save by yourself!
+     * @deprecated
      */
     @Deprecated
     public void commit() {
@@ -275,9 +302,11 @@ public class WorldDataHolder {
 
     /**
      *  Returns a data holder for the given file
+     * @param worldName
      * @param file
      * @return
      * @throws Exception
+     * @deprecated
      */
     @Deprecated
     public static WorldDataHolder load(String worldName, File file) throws Exception {
@@ -418,9 +447,12 @@ public class WorldDataHolder {
 
     /**
      *  Returns a data holder for the given file
-     * @param file
+     * @param worldName
+     * @param groupsFile 
+     * @param usersFile 
      * @return
-     * @throws Exception
+     * @throws FileNotFoundException
+     * @throws IOException
      */
     public static WorldDataHolder load(String worldName, File groupsFile, File usersFile) throws FileNotFoundException, IOException {
         WorldDataHolder ph = new WorldDataHolder(worldName);
@@ -587,6 +619,7 @@ public class WorldDataHolder {
      *  Write a dataHolder in a specified file
      * @param ph
      * @param file
+     * @deprecated
      */
     @Deprecated
     public static void write(WorldDataHolder ph, File file) {
@@ -672,7 +705,7 @@ public class WorldDataHolder {
     /**
      *  Write a dataHolder in a specified file
      * @param ph
-     * @param file
+     * @param groupsFile
      */
     public static void writeGroups(WorldDataHolder ph, File groupsFile) {
         Map<String, Object> root = new HashMap<String, Object>();
@@ -724,7 +757,7 @@ public class WorldDataHolder {
     /**
      *  Write a dataHolder in a specified file
      * @param ph
-     * @param file
+     * @param usersFile
      */
     public static void writeUsers(WorldDataHolder ph, File usersFile) {
         Map<String, Object> root = new HashMap<String, Object>();
@@ -812,20 +845,28 @@ public class WorldDataHolder {
         return permissionsHandler;
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean haveUsersChanged(){
         if(haveUsersChanged)
             return true;
-        for(User u: getUserList()){
+        for(User u: users.values()){
             if(u.isChanged()){
                 return true;
             }
         }
         return false;
     }
+    /**
+     *
+     * @return
+     */
     public boolean haveGroupsChanged(){
         if(haveGroupsChanged)
             return true;
-        for(Group g: getGroupList()){
+        for(Group g: groups.values()){
             if(g.isChanged()){
                 return true;
             }
@@ -833,15 +874,21 @@ public class WorldDataHolder {
         return false;
     }
 
+    /**
+     *
+     */
     public void removeUsersChangedFlag(){
         haveUsersChanged = false;
-        for(User u: getUserList()){
+        for(User u: users.values()){
             u.flagAsSaved();
         }
     }
+    /**
+     *
+     */
     public void removeGroupsChangedFlag(){
         haveGroupsChanged = false;
-        for(Group g: getGroupList()){
+        for(Group g: groups.values()){
             g.flagAsSaved();
         }
     }

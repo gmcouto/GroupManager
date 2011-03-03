@@ -6,6 +6,7 @@ package org.anjocaido.groupmanager.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import org.anjocaido.groupmanager.GroupManager;
 import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import org.anjocaido.groupmanager.utils.StringPermissionComparator;
 
@@ -66,6 +67,10 @@ public abstract class DataUnit {
     }
 
     public void flagAsChanged() {
+        GroupManager.logger.finest("DataSource: "+getDataSource().getName()+" - DataUnit: "+getName()+" flagged as changed!");
+//        for(StackTraceElement st: Thread.currentThread().getStackTrace()){
+//            GroupManager.logger.finest(st.toString());
+//        }
         changed = true;
     }
 
@@ -74,6 +79,7 @@ public abstract class DataUnit {
     }
 
     public void flagAsSaved() {
+        GroupManager.logger.finest("DataSource: "+getDataSource().getName()+" - DataUnit: "+getName()+" flagged as saved!");
         changed = false;
     }
 

@@ -50,7 +50,7 @@ public class Group extends DataUnit implements Cloneable {
             clone.addPermission(perm);
         }
         clone.variables = ((GroupVariables) variables).clone(clone);
-        clone.flagAsChanged();
+        //clone.flagAsChanged();
         return clone;
     }
 
