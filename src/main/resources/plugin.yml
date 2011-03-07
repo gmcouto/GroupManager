@@ -1,5 +1,5 @@
 name: GroupManager
-version: 1.0(alpha)
+version: 1.0(alpha-2)
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -120,7 +120,7 @@ commands:
     usage: /<command>
     permission: groupmanager.mansave
   manload:
-    description: Reload current world. Or load given world.
+    description: Reload current world and config.yml. Or load given world.
     usage: /<command> [world]
     permission: groupmanager.manload
   listgroups:

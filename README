@@ -1,18 +1,15 @@
 BUKIT FORUM THREAD COPY
 -----------------------
 [B]GroupManager[/B] - The Permissions 2.x plugin sucessor.
-[B]Version:[/B] v1.0 pre-alpha-3
+[B]Version:[/B] v1.0 alpha-2
 
 Yes, it has multiworld support now. When 1.0 final release, next step is database (SQLite/MySQL).
 
-Note 0: All Permissions 2.0 plugins maintain the same compatibility they made for Permissions 2.1+.
+---
 
-Note 1: This is an alpha release, it's for testing purposes only. It is for developers have time to make changes for the new multiworld system. I hate having to refactor, but I did a lot of it this time.
-Every plugin that depends directly on GroupManager will break. (sorry!)
-But is for a good cause… a permanent one.
-
-[B]NOTE 2: This is an alpha version(again!). The support for plugins [u]that uses directly Permissions 2.1+[/u] might not work properly in some very particular cases. Like if they changes permissions during the game(ex: a jail system changing group when you jail them)[/B]
-This problem will not occur with most Permissions 2.1+ plugins, and sure will not occur with GroupManager plugins.
+[COLOR=rgb(255, 0, 0)][SIZE=7]If you use Essentials:[/SIZE]
+[SIZE=6]- Don't use both EssentialsGroupManager.jar and GroupManager.jar! Just choose one, because they are the same!
+- Don't use both EssentialsGroupBridge.jar and FakePermissions.jar! Just choose one, because they are the same![/SIZE][/COLOR]
 
 ---
 
@@ -188,120 +185,154 @@ Every permission starting with '+' is tested first. Then comes permissions start
   manuadd:
     description: Change player group to one desired.
     usage: /<command> <player> <group>
+    permission: groupmanager.manuadd
   manudel:
     description: Take user to default group. Removes user specific permissions.
     usage: /<command> <player>
+    permission: groupmanager.manudel
   mangadd:
     description: Add group to the system.
     usage: /<command> <group>
+    permission: groupmanager.mangadd
   mangdel:
     description: Removes group from the system(all it's users become default)
     usage: /<command> <group>
+    permission: groupmanager.mangdel
   manuaddp:
     description: Add permission diretly to the player.
     usage: /<command> <player> <permission>
+    permission: groupmanager.manuaddp
   manudelp:
     description: Removes permission diretly from the player.
     usage: /<command> <player> <permission>
+    permission: groupmanager.manudelp
   manulistp:
     description: List all permissions from a player.
     usage: /<command> <player>
+    permission: groupmanager.manulistp
   manucheckp:
     description: Verify if user has a permission, and where it comes from.
     usage: /<command> <player> <permission>
+    permission: groupmanager.manucheckp
   mangaddp:
     description: Add permission to a group.
     usage: /<command> <group> <permission>
+    permission: groupmanager.mangaddp
   mangdelp:
     description: Removes permission from a group.
     usage: /<command> <group> <permission>
+    permission: groupmanager.mangdelp
   manglistp:
     description: Lists all permissions from a group.
     usage: /<command> <group>
+    permission: groupmanager.manglistp
   mangcheckp:
     description: Check if group has a permission, and where it comes from.
     usage: /<command> <group> <permission>
+    permission: groupmanager.mangcheckp
   mangaddi:
     description: Add a group to another group inheritance list.
     usage: /<command> <group1> <group2>
+    permission: groupmanager.mangaddi
   mangdeli:
     description: Remove a group from another group inheritance list.
     usage: /<command> <group1> <group2>
+    permission: groupmanager.mangdeli
   manuaddv:
     description: Add, or replaces, a variable to a user (like prefix or suffix).
     usage: /<command> <user> <variable> <value>
+    permission: groupmanager.manuaddv
   manudelv:
     description: Remove a variable from a user.
     usage: /<command> <user> <variable>
+    permission: groupmanager.manudelv
   manulistv:
     description: List variables a user has (like prefix or suffix).
     usage: /<command> <user>
+    permission: groupmanager.manulistv
   manucheckv:
     description: Verify a value of a variable of user, and where it comes from.
     usage: /<command> <user> <variable>
+    permission: groupmanager.manucheckv
   mangaddv:
     description: Add, or replaces, a variable to a group (like prefix or suffix).
     usage: /<command> <group> <variable> <value>
+    permission: groupmanager.mangaddv
   mangdelv:
     description: Remove a variable from a group.
     usage: /<command> <group> <variable>
+    permission: groupmanager.mangdelv
   manglistv:
     description: List variables a group has (like prefix or suffix).
     usage: /<command> <group>
+    permission: groupmanager.manglistv
   mangcheckv:
     description: Verify a value of a variable of group, and where it comes from.
     usage: /<command> <group> <variable>
+    permission: groupmanager.mangckeckv
   manwhois:
-     description: Tell the group that user belongs.
-     usage: /<command> <player>
+    description: Tell the group that user belongs.
+    usage: /<command> <player>
+    permission: groupmanager.manwhois
   tempadd:
     description: Creates a temporary permission copy for that user.
     usage: /<command> <player>
+    permission: groupmanager.tempadd
   tempdel:
     description: Remove the temporary permission copy for player.
     usage: /<command> <player>
+    permission: groupmanager.tempdel
   templist:
     description: List players in overload-permissions mode made by /tempadd.
     usage: /<command>
+    permission: groupmanager.templist
   tempdelall:
     description: Remove all overrides made by command /tempadd.
     usage: /<command>
+    permission: groupmanager.tempdelall
   mansave:
     description: Save all permissions on file.
     usage: /<command>
+    permission: groupmanager.mansave
   manload:
     description: Reload current world. Or load given world.
     usage: /<command> [world]
+    permission: groupmanager.manload
   listgroups:
     description: List the groups available.
     usage: /<command>
+    permission: groupmanager.listgroups
   manpromote:
     description: Promote a player in the same heritage line to a higher rank.
     usage: /<command> <player> <group>
+    permission: groupmanager.manpromote
   mandemote:
     description: Demote a player in the same heritage line to a lower rank.
     usage: /<command> <player> <group>
+    permission: groupmanager.mandemote
   mantogglevalidate:
     description: Toggle on/off the validating if player is online.
     usage: /<command>
+    permission: groupmanager.mantogglevalidate
   mantogglesave:
     description: Toggle on/ff the autosave.
     usage: /<command>
+    permission: groupmanager.mantogglesave
   manworld:
     description: Prints the selected world name
     usage: /<command>
+    permission: groupmanager.manworld
   manselect:
     description: Select a world to work with next commands.
     usage: /<command> <world>
+    permission: groupmanager.manselect
   manclear:
     description: Clear world selection. Next commands will work on your world.
-    usage: /<command>[/CODE]
+    usage: /<command>
+    permission: groupmanager.manclear[/CODE]
 
 All commands that changes permissions only allow you to change users below in a inheritance level(eg. Admins can't mod other Admins, but can modify Moderators).
 Except for Console, he can modify anyone.
-
-All of these commands use permission:
-[QUOTE]groupmanager.<command>[/QUOTE]
 
 [B]So, what happens with all of these plugins that already use Permissions?[/B]
 They will still work. I made a fake Permissions plugin, that will replace your old Permissions plugin. And the new fake one will attach directly on GroupManager system. So all plugins will think they are working with Permissions, but they will work with GroupManager.
@@ -365,6 +396,12 @@ And, finally, how to check a user permission:
 - A: No. I made the decision to store data in GroupManager folder because I don't think it is right my plugin mess around with other ones files. Unfortunately, other plugins of group modification tries to access other files than mine.
 
 [B]Changelog:[/B]
+[B]Version[/B] [B]1.0 alpha-2[/B]:
+• Now /manload reloads config.yml(which means mirror configuration receives updates too).
+[SPOILER]
+[B]Version[/B] [B]1.0 alpha[/B]:
+• Fixed some issues with /manpromote and /mandemote for multiples inheritances
+• Added permission node for commands in plugin.yml. So the newer EssentialsHelp feature I created will filter commands that people don't have(dev #688).
 [B]Version[/B] [B]1.0 pre-alpha-3[/B]:
 • Now /manucheckp and /mangcheckp tells you if the permission was negated by a negation node.
 • Now using Breadth-first search for inheritance harvest. It guarantees that closer groups in inheritance are checked first.
@@ -372,7 +409,6 @@ And, finally, how to check a user permission:
 • Now it reads old data.yml and auto-install it to default world if none is found.
 • Created a system where plugins can get detailed answers from a permission check.
 • Deprecated some inefficient methods(all of them redirects to the new efficient method), but they still works.
-[SPOILER]
 [B]Version[/B] 1.0 pre-alpha-2:
 • World selection is optional, except for console.
 • Not selecting a world makes it run on same world of the command sender.
@@ -447,19 +483,12 @@ And, finally, how to check a user permission:
 • Make it work, optionally, with SQLite/MySQL(thinking of Persistence plugin, anyone with ideas?).
 
 [B]Latest Build Download:[/B]
-http://www.mdn.fm/files/273437_lbjoi/GroupManager-1.0-pre-alpha-3.zip
+http://www.mdn.fm/files/275676_kkgmg/GroupManager-1.0-alpha-2.zip
 
 ===========================================
 [B]Other Downloads:[/B]
 Java Doc:
 http://www.mdn.fm/files/273150_qjkb5/JavaDoc-GroupManager-1.0-pre-alpha-3.zip
-
-[B]Previous Versions:[/B]
-Version 0.99d:
-http://www.mdn.fm/files/271608_cfpn9/GroupManager-0.99d.zip
-
-Version 0.99c:
-http://www.mdn.fm/files/270340_vuz5z/GroupManager-0.99c.zip
 
 ===========================================
 Plugins I love to use with GroupManager:

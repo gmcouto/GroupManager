@@ -60,6 +60,10 @@ public class WorldsHolder {
     }
 
     private void initialLoad() {
+        initialWorldLoading();
+        mirrorSetUp();
+    }
+    private void initialWorldLoading(){
         //LOAD EVERY WORLD POSSIBLE
         loadWorld(serverDefaultWorldName);
         defaultWorld = worldsData.get(serverDefaultWorldName);
@@ -72,6 +76,9 @@ public class WorldsHolder {
                 loadWorld(folder.getName());
             }
         }
+    }
+    public void mirrorSetUp(){
+        mirrors.clear();
         Map<String, Object> mirrorsMap = plugin.getConfig().getMirrorsMap();
         if (mirrorsMap != null) {
             for (String source : mirrorsMap.keySet()) {

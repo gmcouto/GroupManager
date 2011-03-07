@@ -1305,6 +1305,7 @@ public class GroupManager extends JavaPlugin {
                         return true;
                     }
                     //WORKING
+                    config.load();
                     if (args.length > 0) {
                         auxString = "";
                         for (int i = 0; i < args.length; i++) {
@@ -1316,9 +1317,10 @@ public class GroupManager extends JavaPlugin {
                         worldsHolder.loadWorld(auxString);
                         sender.sendMessage("The request to world '" + auxString + "' was sent.");
                     } else {
-                        dataHolder.reload();
+                        worldsHolder.reloadAll();
                         sender.sendMessage(ChatColor.YELLOW + " The current world was reloaded.");
                     }
+                    worldsHolder.mirrorSetUp();
                     return true;
                 case listgroups:
                     //VALIDANDO ESTADO DO SENDER

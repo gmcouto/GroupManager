@@ -27,6 +27,10 @@ public class GMConfiguration {
 
     public GMConfiguration(GroupManager plugin) {
         this.plugin = plugin;
+        load();
+    }
+
+    public void load() {
         if (!plugin.getDataFolder().exists()) {
             plugin.getDataFolder().mkdirs();
         }
