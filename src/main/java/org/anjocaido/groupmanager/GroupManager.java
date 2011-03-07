@@ -19,11 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
 import org.anjocaido.groupmanager.dataholder.worlds.WorldsHolder;
 import org.anjocaido.groupmanager.utils.GMLoggerHandler;
 import org.anjocaido.groupmanager.utils.PermissionCheckResult;
@@ -1374,15 +1371,19 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
                         return false;
                     }
-                    if (!isConsole && (permissionHandler.searchGroupInInheritance(auxGroup, senderGroup.getName(), null))) {
+                    if (!isConsole && (permissionHandler.hasGroupInInheritance(auxGroup, senderGroup.getName()))) {
                         sender.sendMessage(ChatColor.RED + "The destination group can't be the same as yours, or higher.");
                         return false;
                     }
                     if (!isConsole && (!permissionHandler.inGroup(senderUser.getName(), auxUser.getGroupName()) || !permissionHandler.inGroup(senderUser.getName(), auxGroup.getName()))) {
-                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group of different heritage line.");
+                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group that you don't inherit.");
                         return false;
                     }
-                    if (!isConsole && (!permissionHandler.searchGroupInInheritance(auxGroup, auxUser.getGroupName(), null))) {
+                    if (!isConsole && (!permissionHandler.hasGroupInInheritance(auxUser.getGroup(), auxGroup.getName()) && !permissionHandler.hasGroupInInheritance(auxGroup, auxUser.getGroupName()))) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player using groups with different heritage line.");
+                        return false;
+                    }
+                    if (!isConsole && (!permissionHandler.hasGroupInInheritance(auxGroup, auxUser.getGroupName()))) {
                         sender.sendMessage(ChatColor.RED + "The new group must be a higher rank.");
                         return false;
                     }
@@ -1426,15 +1427,19 @@ public class GroupManager extends JavaPlugin {
                         sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
                         return false;
                     }
-                    if (!isConsole && (permissionHandler.searchGroupInInheritance(auxGroup, senderGroup.getName(), null))) {
+                    if (!isConsole && (permissionHandler.hasGroupInInheritance(auxGroup, senderGroup.getName()))) {
                         sender.sendMessage(ChatColor.RED + "The destination group can't be the same as yours, or higher.");
                         return false;
                     }
                     if (!isConsole && (!permissionHandler.inGroup(senderUser.getName(), auxUser.getGroupName()) || !permissionHandler.inGroup(senderUser.getName(), auxGroup.getName()))) {
-                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group of different heritage line.");
+                        sender.sendMessage(ChatColor.RED + "Can't modify player involving a group that you don' inherit.");
                         return false;
                     }
-                    if (!isConsole && (permissionHandler.searchGroupInInheritance(auxGroup, auxUser.getGroupName(), null))) {
+                    if (!isConsole && (!permissionHandler.hasGroupInInheritance(auxUser.getGroup(), auxGroup.getName()) && !permissionHandler.hasGroupInInheritance(auxGroup, auxUser.getGroupName()))) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player using groups with different heritage line.");
+                        return false;
+                    }
+                    if (!isConsole && (permissionHandler.hasGroupInInheritance(auxGroup, auxUser.getGroupName()))) {
                         sender.sendMessage(ChatColor.RED + "The new group must be a lower rank.");
                         return false;
                     }
@@ -1492,8 +1497,12 @@ public class GroupManager extends JavaPlugin {
                     }
                     auxString = "";
                     for (int i = 0; i < args.length; i++) {
+                        if(args[i]==null){
+                            logger.warning("Bukkit gave invalid arguments array! Cmd: "+cmd.getName()+" args.length: "+args.length);
+                            return false;
+                        }
                         auxString += args[i];
-                        if ((i + 1) < args.length) {
+                        if (i < (args.length-1)) {
                             auxString += " ";
                         }
                     }

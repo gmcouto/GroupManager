@@ -5,7 +5,6 @@
 package org.anjocaido.groupmanager.data;
 
 import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
