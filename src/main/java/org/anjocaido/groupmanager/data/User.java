@@ -4,6 +4,8 @@
  */
 package org.anjocaido.groupmanager.data;
 
+import com.sun.org.apache.bcel.internal.generic.AALOAD;
+import java.util.ArrayList;
 import org.anjocaido.groupmanager.dataholder.WorldDataHolder;
 import java.util.Map;
 
@@ -17,13 +19,14 @@ public class User extends DataUnit implements Cloneable {
      *
      */
     private String group = null;
+    private ArrayList<String> subGroups = new ArrayList<String>();
     /**
      *This one holds the fields in INFO node.
      * like prefix = 'c'
      * or build = false
      */
     private UserVariables variables = new UserVariables(this);
-    
+
 
     /**
      *
@@ -96,6 +99,7 @@ public class User extends DataUnit implements Cloneable {
     /**
      * @param group the group to set
      */
+    @Deprecated
     public void setGroup(String group) {
         this.group = group;
         flagAsChanged();
@@ -108,8 +112,57 @@ public class User extends DataUnit implements Cloneable {
         if (!this.getDataSource().groupExists(group.getName())) {
             getDataSource().addGroup(group);
         }
+        group = getDataSource().getGroup(group.getName());
         this.group = group.getName();
         flagAsChanged();
+    }
+
+    public void addSubGroup(Group subGroup){
+        if(this.group.equalsIgnoreCase(subGroup.getName())){
+            return;
+        }
+        if (!this.getDataSource().groupExists(subGroup.getName())) {
+            getDataSource().addGroup(subGroup);
+        }  
+        subGroup = getDataSource().getGroup(subGroup.getName());
+        removeSubGroup(subGroup);
+        subGroups.add(subGroup.getName());
+        flagAsChanged();
+    }
+    public int subGroupsSize(){
+        return subGroups.size();
+    }
+    public boolean isSubGroupsEmpty(){
+        return subGroups.isEmpty();
+    }
+    public boolean containsSubGroup(Group subGroup){
+        return subGroups.contains(subGroup.getName());
+    }
+    public boolean removeSubGroup(Group subGroup){
+        try{
+            if(subGroups.remove(subGroup.getName())){
+                flagAsChanged();
+                return true;
+            }
+        } catch (Exception e){
+
+        }
+        return false;
+    }
+    public ArrayList<Group> subGroupListCopy(){
+        ArrayList<Group> val = new ArrayList<Group>();
+        for(String gstr: subGroups){
+            Group g = getDataSource().getGroup(gstr);
+            if(g==null){
+                removeSubGroup(g);
+                continue;
+            }
+            val.add(g);
+        }
+        return val;
+    }
+    public ArrayList<String> subGroupListStringCopy(){
+        return (ArrayList<String>) subGroups.clone();
     }
 
     /**

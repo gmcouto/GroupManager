@@ -11,6 +11,8 @@ package org.anjocaido.groupmanager.utils;
 public enum GroupManagerPermissions {
     manuadd,
     manudel,
+    manuaddsub,
+    manudelsub,
     mangadd,
     mangdel,
     manuaddp,

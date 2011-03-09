@@ -38,7 +38,6 @@ public class WorldDataHolder {
      *
      */
     protected String name;
-
     /**
      *  The actual groups holder
      */
@@ -57,7 +56,6 @@ public class WorldDataHolder {
      */
     @Deprecated
     protected File f;
-
     /**
      *
      */
@@ -70,7 +68,6 @@ public class WorldDataHolder {
      *
      */
     protected File groupsFile;
-
     /**
      *
      */
@@ -341,8 +338,8 @@ public class WorldDataHolder {
                     thisGroupNode.put("default", false);
                 }
                 if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
-                    if(ph.getDefaultGroup()!=null) {
-                        GroupManager.logger.warning("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
+                    if (ph.getDefaultGroup() != null) {
+                        GroupManager.logger.warning("The group " + thisGrp.getName() + " is declaring be default where" + ph.getDefaultGroup().getName() + " already was.");
                         GroupManager.logger.warning("Overriding first request.");
                     }
                     ph.setDefaultGroup(thisGrp);
@@ -444,12 +441,11 @@ public class WorldDataHolder {
         return ph;
     }
 
-
     /**
      *  Returns a data holder for the given file
      * @param worldName
-     * @param groupsFile 
-     * @param usersFile 
+     * @param groupsFile
+     * @param usersFile
      * @return
      * @throws FileNotFoundException
      * @throws IOException
@@ -492,8 +488,8 @@ public class WorldDataHolder {
                     thisGroupNode.put("default", false);
                 }
                 if ((Boolean.parseBoolean(thisGroupNode.get("default").toString()))) {
-                    if(ph.getDefaultGroup()!=null){
-                        GroupManager.logger.warning("The group "+thisGrp.getName()+" is declaring be default where"+ph.getDefaultGroup().getName()+" already was.");
+                    if (ph.getDefaultGroup() != null) {
+                        GroupManager.logger.warning("The group " + thisGrp.getName() + " is declaring be default where" + ph.getDefaultGroup().getName() + " already was.");
                         GroupManager.logger.warning("Overriding first request.");
                     }
                     ph.setDefaultGroup(thisGrp);
@@ -592,6 +588,28 @@ public class WorldDataHolder {
                 thisUser.addPermission(thisUserNode.get("permissions").toString());
             }
 
+            //SUBGROUPS LOADING
+            if (thisUserNode.get("subgroups") == null) {
+                thisUserNode.put("subgroups", new ArrayList<String>());
+            }
+            if (thisUserNode.get("subgroups") instanceof List) {
+                for (Object o : ((List) thisUserNode.get("subgroups"))) {
+                    Group subGrp = ph.getGroup(o.toString());
+                    if (subGrp != null) {
+                        thisUser.addSubGroup(subGrp);
+                    } else {
+                        GroupManager.logger.warning("Subgroup " + o.toString() + " not found for user " + thisUser.getName() + ". Ignoring entry.");
+                    }
+                }
+            } else if (thisUserNode.get("subgroups") instanceof String) {
+                Group subGrp = ph.getGroup(thisUserNode.get("subgroups").toString());
+                if (subGrp != null) {
+                    thisUser.addSubGroup(subGrp);
+                } else {
+                    GroupManager.logger.warning("Subgroup " + thisUserNode.get("subgroups").toString() + " not found for user " + thisUser.getName() + ". Ignoring entry.");
+                }
+            }
+
 
             //USER INFO NODE - BETA
 
@@ -687,7 +705,7 @@ public class WorldDataHolder {
         DumperOptions opt = new DumperOptions();
         opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         final Yaml yaml = new Yaml(opt);
-        
+
         FileWriter tx = null;
         try {
             tx = new FileWriter(file, false);
@@ -718,8 +736,8 @@ public class WorldDataHolder {
             Map<String, Object> aGroupMap = new HashMap<String, Object>();
             groupsMap.put(group.getName(), aGroupMap);
 
-            if(ph.defaultGroup==null){
-                GroupManager.logger.severe("There is no default group for world: "+ph.getName());
+            if (ph.defaultGroup == null) {
+                GroupManager.logger.severe("There is no default group for world: " + ph.getName());
             }
             aGroupMap.put("default", group.equals(ph.defaultGroup));
 
@@ -753,7 +771,6 @@ public class WorldDataHolder {
         }
     }
 
-
     /**
      *  Write a dataHolder in a specified file
      * @param ph
@@ -766,7 +783,7 @@ public class WorldDataHolder {
         root.put("users", usersMap);
         for (String userKey : ph.users.keySet()) {
             User user = ph.users.get(userKey);
-            if ((user.getGroup() == null || user.getGroup().equals(ph.defaultGroup)) && user.getPermissionList().isEmpty() && user.getVariables().isEmpty()) {
+            if ((user.getGroup() == null || user.getGroup().equals(ph.defaultGroup)) && user.getPermissionList().isEmpty() && user.getVariables().isEmpty() && user.isSubGroupsEmpty()) {
                 continue;
             }
 
@@ -782,14 +799,16 @@ public class WorldDataHolder {
             if (user.getVariables().getSize() > 0) {
                 Map<String, Object> infoMap = new HashMap<String, Object>();
                 aUserMap.put("info", infoMap);
-
                 for (String infoKey : user.getVariables().getVarKeyList()) {
                     infoMap.put(infoKey, user.getVariables().getVarObject(infoKey));
                 }
             }
             //END USER INFO NODE - BETA
-
             aUserMap.put("permissions", user.getPermissionList());
+
+            //SUBGROUPS NODE - BETA
+            aUserMap.put("subgroups", user.subGroupListStringCopy());
+            //END SUBGROUPS NODE - BETA
         }
         DumperOptions opt = new DumperOptions();
         opt.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -839,8 +858,8 @@ public class WorldDataHolder {
      * @return the permissionsHandler
      */
     public AnjoPermissionsHandler getPermissionsHandler() {
-        if(permissionsHandler==null){
-            permissionsHandler=new AnjoPermissionsHandler(this);
+        if (permissionsHandler == null) {
+            permissionsHandler = new AnjoPermissionsHandler(this);
         }
         return permissionsHandler;
     }
@@ -849,25 +868,28 @@ public class WorldDataHolder {
      *
      * @return
      */
-    public boolean haveUsersChanged(){
-        if(haveUsersChanged)
+    public boolean haveUsersChanged() {
+        if (haveUsersChanged) {
             return true;
-        for(User u: users.values()){
-            if(u.isChanged()){
+        }
+        for (User u : users.values()) {
+            if (u.isChanged()) {
                 return true;
             }
         }
         return false;
     }
+
     /**
      *
      * @return
      */
-    public boolean haveGroupsChanged(){
-        if(haveGroupsChanged)
+    public boolean haveGroupsChanged() {
+        if (haveGroupsChanged) {
             return true;
-        for(Group g: groups.values()){
-            if(g.isChanged()){
+        }
+        for (Group g : groups.values()) {
+            if (g.isChanged()) {
                 return true;
             }
         }
@@ -877,18 +899,19 @@ public class WorldDataHolder {
     /**
      *
      */
-    public void removeUsersChangedFlag(){
+    public void removeUsersChangedFlag() {
         haveUsersChanged = false;
-        for(User u: users.values()){
+        for (User u : users.values()) {
             u.flagAsSaved();
         }
     }
+
     /**
      *
      */
-    public void removeGroupsChangedFlag(){
+    public void removeGroupsChangedFlag() {
         haveGroupsChanged = false;
-        for(Group g: groups.values()){
+        for (Group g : groups.values()) {
             g.flagAsSaved();
         }
     }

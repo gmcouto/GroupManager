@@ -1,20 +1,59 @@
 users:
-    anjocaido:
-        group: Admins
-        info:
-            prefix: '&c'
-            suffix: King
-        permissions: []
-    gmcouto:
-        group: SemiAdmin
-        info:
-            prefix: '&c'
-            suffix: SemiKing
-        permissions: []
-    zenexer:
-        group: Moderator
-        info:
-            prefix: '&c'
-            suffix: Mod
-        permissions:
-        - essentials.god
+  aMiner:
+    subgroups:
+    - Miner
+    permissions: []
+    group: BlueFaction
+    info:
+      prefix: '&d'
+      suffix: Miner
+  gmcouto:
+    subgroups: []
+    permissions: []
+    group: SemiAdmin
+  tempRailer:
+    subgroups:
+    - Miner
+    - Railer
+    permissions: []
+    group: BlueFaction
+    info:
+      prefix: '&d'
+      suffix: Miner
+  anjocaido:
+    subgroups: []
+    permissions: []
+    group: Admin
+    info:
+      prefix: '&c'
+      suffix: King
+  aFarmer:
+    subgroups:
+    - Farmer
+    permissions: []
+    group: RedFaction
+    info:
+      prefix: '&d'
+      suffix: Farmer
+  zenexer:
+    subgroups: []
+    permissions:
+    - essentials.god
+    group: Moderator
+  Teste:
+    subgroups:
+    - Miner
+    - Railer
+    - SuperCart
+    - Fighter
+    - FlyingMan
+    permissions: []
+    group: BlueFaction
+  aHealer:
+    subgroups:
+    - Healer
+    permissions: []
+    group: RedFaction
+    info:
+      prefix: '&d'
+      suffix: Healer

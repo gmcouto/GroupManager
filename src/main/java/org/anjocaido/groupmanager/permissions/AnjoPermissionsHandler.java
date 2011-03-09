@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 
 /**
  *  Everything here maintains the model created by Nijikokun
- * 
+ *
  * But implemented to use GroupManager system. Which provides instant changes,
  * without file access.
  *
@@ -87,7 +87,15 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      */
     @Override
     public boolean inGroup(String name, String group) {
-        return hasGroupInInheritance(ph.getUser(name).getGroup(), group);
+        if (hasGroupInInheritance(ph.getUser(name).getGroup(), group)) {
+            return true;
+        }
+        for (Group subGroup : ph.getUser(name).subGroupListCopy()) {
+            if (hasGroupInInheritance(subGroup, group)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -487,6 +495,14 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
             return resultGroup;
         }
 
+        //SUBGROUPS CHECK
+        for (Group subGroup : user.subGroupListCopy()) {
+            PermissionCheckResult resultSubGroup = checkGroupPermissionWithInheritance(subGroup, targetPermission);
+            if (!resultSubGroup.resultType.equals(PermissionCheckResult.Type.NOTFOUND)) {
+                return resultSubGroup;
+            }
+        }
+
         //THEN IT RETURNS A NOT FOUND
         return result;
     }
@@ -496,7 +512,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      *
      * it redirects to the other method now. This one was deprecated, and will
      * be gone in a future release.
-     * 
+     *
      * @param start
      * @param variable
      * @param alreadyChecked
@@ -547,7 +563,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      *
      * redirected to the other method. this is deprecated now. and will be gone
      * in the future releases.
-     * 
+     *
      * @param start The group to start the search.
      * @param askedGroup Name of the group you're looking for
      * @param alreadyChecked groups to ignore(pass null on it, please)
@@ -620,7 +636,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      * and ownerType too.
      *
      * It does Breadth-first search
-     * 
+     *
      * @param start
      * @param targetPermission
      * @return
@@ -656,7 +672,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     /**
      * It uses checkGroupPermissionWithInheritance
      * and cast the owner to Group type if result type was EXCEPTION or FOUND.
-     * 
+     *
      * @param start
      * @param permission
      * @param alreadyChecked
@@ -674,8 +690,8 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     * Return the group that passes on the permission test. Checking whole
-     * inheritance chain.
+     * Return whole list of names of groups in a inheritance chain. Including a
+     * starting group.
      *
      * it now redirects to the other method. but get away from this one,
      * it will disappear in a future release.
@@ -691,8 +707,8 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
-     * Return the group that passes on the permission test. Checking whole
-     * inheritance chain.
+     * Return whole list of names of groups in a inheritance chain. Including a
+     * starting group.
      *
      * It does Breadth-first search. So closer groups will appear first in list.
      *
@@ -733,7 +749,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
      *
      * Every '-' or '+' in the beginning is ignored. It will match only
      * node names.
-     * 
+     *
      * @param userAcessLevel
      * @param fullPermissionName
      * @return true if found a matching token. false if not.
@@ -742,7 +758,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         if (userAcessLevel == null || fullPermissionName == null) {
             return false;
         }
-        GroupManager.logger.finest("COMPARING "+userAcessLevel+" WITH "+fullPermissionName);
+        GroupManager.logger.finest("COMPARING " + userAcessLevel + " WITH " + fullPermissionName);
 
         if (userAcessLevel.startsWith("+")) {
             userAcessLevel = userAcessLevel.substring(1);
@@ -762,7 +778,7 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
         while (levelATokenizer.hasMoreTokens() && levelBTokenizer.hasMoreTokens()) {
             String levelA = levelATokenizer.nextToken();
             String levelB = levelBTokenizer.nextToken();
-            GroupManager.logger.finest("ROUND "+levelA+" AGAINST "+levelB);
+            GroupManager.logger.finest("ROUND " + levelA + " AGAINST " + levelB);
             if (levelA.contains("*")) {
                 GroupManager.logger.finest("WIN");
                 return true;
@@ -785,14 +801,19 @@ public class AnjoPermissionsHandler extends PermissionsReaderInterface {
     }
 
     /**
+     * Returns a list of all groups.
      *
+     * Including subgroups.
      * @param userName
      * @return
      */
     public String[] getGroups(String userName) {
-        ArrayList<String> listAllGroupsInherited = listAllGroupsInherited(ph.getUser(userName).getGroup(), null);
-        String[] arr = new String[listAllGroupsInherited.size()];
-        return listAllGroupsInherited.toArray(arr);
+        ArrayList<String> allGroups = listAllGroupsInherited(ph.getUser(userName).getGroup());
+        for(Group subg: ph.getUser(userName).subGroupListCopy()){
+            allGroups.addAll(listAllGroupsInherited(subg));
+        }
+        String[] arr = new String[allGroups.size()];
+        return allGroups.toArray(arr);
     }
 
     /**

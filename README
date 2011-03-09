@@ -1,9 +1,7 @@
-BUKIT FORUM THREAD COPY
------------------------
 [B]GroupManager[/B] - The Permissions 2.x plugin sucessor.
-[B]Version:[/B] v1.0 alpha-2
+[B]Version:[/B] v1.0 alpha-5
 
-Yes, it has multiworld support now. When 1.0 final release, next step is database (SQLite/MySQL).
+Yes, it has multiworld and [b][SIZE=7]multigroup users[/SIZE][/b] support now. When 1.0 final release, next step is database (SQLite/MySQL).
 
 ---
 
@@ -21,13 +19,15 @@ The purpose has changed. Permissions got better. But it still not enough. Why I 
 I started it thinking that it would make me happy. Now it's because it will make YOU happy.
 
 [B]Advantages against Permissions:[/B]
+• User multigroup support.
 • Full command list to change anything during game or thru the console.
 • Good API to change things. You to change a player group you can do getPlayer(name).setGroup(getGroup(name))
 • Exception nodes.
 • It separates groups files from users files.
 
 [B]New Features:[/B]
-• Multiworld support (yay!).
+• User multigroup support(yay!)
+• Multiworld support(meh).
 • It has world permission mirroring(you can make a world nether having the same permissions of world2 instead of default world1).
 • It saves only the files that will have contents changed.
 • It separates groups files from users files.
@@ -43,6 +43,16 @@ I started it thinking that it would make me happy. Now it's because it will make
 • It has a fantastic temporary permissions system, that let's you to make changes in users, with the possibility to go back at any time(and it never is saved on files).
 • Negative nodes(aka '-'): You can take off specific permissions from users that have a full set.
 • Exception node(aka '+'): Used when a user/group has a set of negative nodes, and you want to allow a specific one. 
+
+[B]User's subgroups:[/B]  a brief explanation
+You can see on the file structure(down here on same post), that users have an optional node called subgroups. That node is a list, just like "permissions" node. There you can list a user subgroup, it can be as many as you want.
+What a user inherits from subgroups? [B]Only permissions.[/B] It means nothing on a subgroup's info node(prefix, suffix, build and other variables) will be considered. 
+The user will still be considered as a member of that group, but will only inherits it's permissions, like some commands, kits, etc.
+
+This reduces the needs of a nest of groups inheriting each other.
+You can have one user in Peasant group, which has only some basics, and them let him join in Miner as a subgroup, where he can get Miner kits, or other related to miner group.
+Later, when your town needs a railer, you can just add the group Railer to him as subgroup, and he will have both things at same time. When the job is done, you just remove the subgroup.
+This gets even more interesting when you have groups related to towns, factions, teams… etc.
 
 [B]World mirroring:[/B] a brief explanation
 Let's say you have a config file like this:
@@ -106,8 +116,8 @@ groups.yml
         default: false
         info:
             build: false
-            prefix: ''
-            suffix: ''
+            prefix: '&c'
+            suffix: 'Mod'
         inheritance:
         - Default
         permissions:
@@ -119,15 +129,67 @@ groups.yml
         default: false
         info:
             build: false
-            prefix: ''
-            suffix: ''
+            prefix: '&c'
+            suffix: 'SemiAdmin'
         inheritance:
         - Moderator
         permissions:
         - +groupmanager.mandemote
         - +groupmanager.manpromote
         - -groupmanager.*
-        - '*'[/CODE]
+        - '*'
+    Peasant:
+        default: true
+        info:
+            build: false
+            prefix: '&e'
+            suffix: 'Peasant'
+        inheritance:
+        - Default
+        permissions: []
+    Miner:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        permissions:
+        - essentials.kit
+        - essentials.kit.miner
+        - flashlight.regular
+    Healer:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        permissions:
+        - essentials.kit
+        - essentials.kit.healer
+        - essentials.heal
+    Farmer:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        permissions:
+        - essentials.kit
+        - essentials.kit.farmer
+        - essentials.spawnmob
+    Railer:
+        default: false
+        info:
+            build: false
+            prefix: ''
+            suffix: ''
+        inheritance:
+        permissions:
+        - essentials.kit
+        - essentials.kit.railer[/CODE]
 users.yml
 [CODE]users:
     anjocaido:
@@ -138,17 +200,44 @@ users.yml
         permissions: []
     gmcouto:
         group: SemiAdmin
-        info:
-            prefix: '&c'
-            suffix: SemiKing
         permissions: []
     zenexer:
         group: Moderator
-        info:
-            prefix: '&c'
-            suffix: Mod
         permissions:
-        - essentials.god[/CODE]
+        - essentials.god
+    aMiner:
+        group: Peasant
+        info:
+            prefix: '&d'
+            suffix: Miner
+        permissions: []
+        subgroups:
+          - Miner
+    aHealer:
+        group: Peasant
+        info:
+            prefix: '&d'
+            suffix: Healer
+        permissions: []
+        subgroups:
+          - Healer
+    aFarmer:
+        group: Peasant
+        info:
+            prefix: '&d'
+            suffix: Farmer
+        permissions: []
+        subgroups:
+          - Farmer
+    tempRailer:
+        group: Peasant
+        info:
+            prefix: '&d'
+            suffix: Miner
+        permissions: []
+        subgroups:
+          - Miner
+          - Railer[/CODE]
 You can see that the node structure are exactly the same used for GroupManager 0.99d(-) and Permissions, it means you can use the same files here.
 [B]Note: Every node that doesn't make part of the respective file is ignored. So if you are migrating from older GroupManager or Permissions you can just duplicate your files as groups.yml and users.yml. When comes the time where is needed to save the file, all unused data for each file will be discarded. So you don't need to split files, just duplicate them with correct names, it will work.[/b]
 
@@ -183,13 +272,21 @@ Every permission starting with '+' is tested first. Then comes permissions start
 (on next version, when a command involves a player, there will be a toggle that will automatically act on the victim(player) world is in)
 [CODE]commands:
   manuadd:
-    description: Change player group to one desired.
+    description: Move a player to desired group.(Adds to the file if not exists)
     usage: /<command> <player> <group>
     permission: groupmanager.manuadd
   manudel:
-    description: Take user to default group. Removes user specific permissions.
+    description: Remove any user specific configuration. Make him default group.
     usage: /<command> <player>
     permission: groupmanager.manudel
+  manuaddsub:
+    description: Add a group to a player's subgroup list.
+    usage: /<command> <player> <group>
+    permission: groupmanager.manuaddsub
+  manudelsub:
+    description: Remove a group to a player's subgroup list.
+    usage: /<command> <player> <group>
+    permission: groupmanager.manudelsub
   mangadd:
     description: Add group to the system.
     usage: /<command> <group>
@@ -295,7 +392,7 @@ Every permission starting with '+' is tested first. Then comes permissions start
     usage: /<command>
     permission: groupmanager.mansave
   manload:
-    description: Reload current world. Or load given world.
+    description: Reload current world and config.yml. Or load given world.
     usage: /<command> [world]
     permission: groupmanager.manload
   listgroups:
@@ -362,7 +459,7 @@ public void onEnable() {
                 this.getServer().getPluginManager().enablePlugin(p);
             }
             GroupManager gm = (GroupManager) p;
-            WorldsHolder wd = getWorldsHolder();
+            WorldsHolder wd = gm.getWorldsHolder();
         } else {
             this.getPluginLoader().disablePlugin(this);
         }
@@ -396,9 +493,19 @@ And, finally, how to check a user permission:
 - A: No. I made the decision to store data in GroupManager folder because I don't think it is right my plugin mess around with other ones files. Unfortunately, other plugins of group modification tries to access other files than mine.
 
 [B]Changelog:[/B]
+[B]Version[/B] [B]1.0 alpha-5[/B]:
+• Fixed a bug in method String[] groups(groupName)
+• Added some functionality to Tasks class
+• Fixed some errors in JavaDoc
+• Changed templates to make use of Roles plugin
+[SPOILER]
+[B]Version[/B] [B]1.0 alpha-4[/B]:
+• Fixed subgroups listing when using /manulistp
+[B]Version[/B] [B]1.0 alpha-3[/B]:
+• Basic user multigroup support using subgroups concept.
+• Added tracking for minor bugs.
 [B]Version[/B] [B]1.0 alpha-2[/B]:
 • Now /manload reloads config.yml(which means mirror configuration receives updates too).
-[SPOILER]
 [B]Version[/B] [B]1.0 alpha[/B]:
 • Fixed some issues with /manpromote and /mandemote for multiples inheritances
 • Added permission node for commands in plugin.yml. So the newer EssentialsHelp feature I created will filter commands that people don't have(dev #688).
@@ -483,12 +590,15 @@ And, finally, how to check a user permission:
 • Make it work, optionally, with SQLite/MySQL(thinking of Persistence plugin, anyone with ideas?).
 
 [B]Latest Build Download:[/B]
+http://www.mdn.fm/files/276278_razmw/GroupManager-1.0-alpha-4.zip
+
+Old Version(without multigroup):
 http://www.mdn.fm/files/275676_kkgmg/GroupManager-1.0-alpha-2.zip
 
 ===========================================
 [B]Other Downloads:[/B]
 Java Doc:
-http://www.mdn.fm/files/273150_qjkb5/JavaDoc-GroupManager-1.0-pre-alpha-3.zip
+http://www.mdn.fm/files/276266_vqd0d/JavaDoc-GroupManager-1.0-alpha-3.zip
 
 ===========================================
 Plugins I love to use with GroupManager:

@@ -306,7 +306,7 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
-                    sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+                    sender.sendMessage(ChatColor.YELLOW + "You changed player '" + auxUser.getName() + "' group to '" + auxGroup.getName() + "'.");
 
                     return true;
                 //break;
@@ -341,7 +341,80 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     dataHolder.removeUser(auxUser.getName());
-                    sender.sendMessage(ChatColor.YELLOW + "You changed that player to default group.");
+                    sender.sendMessage(ChatColor.YELLOW + "You changed player '" + auxUser.getName() + "' to default settings.");
+
+                    return true;
+                case manuaddsub:
+                    //VALIDANDO ESTADO DO SENDER
+                    if (dataHolder == null || permissionHandler == null) {
+                        sender.sendMessage(ChatColor.RED + "Couldn't retrieve your world. World selection is needed.");
+                        sender.sendMessage(ChatColor.RED + "Use /manselect <world>");
+                        return true;
+                    }
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 2) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    auxGroup = dataHolder.getGroup(args[1]);
+                    if (auxGroup == null) {
+                        sender.sendMessage(ChatColor.RED + "Group not found!");
+                        return false;
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!isConsole && (senderGroup != null ? permissionHandler.inGroup(auxUser.getName(), senderGroup.getName()) : false)) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
+                        return false;
+                    }
+                    //PARECE OK
+                    auxUser.addSubGroup(auxGroup);
+                    sender.sendMessage(ChatColor.YELLOW + "You changed player '" + auxUser.getName() + "' group to '" + auxGroup.getName() + "'.");
+
+                    return true;
+                case manudelsub:
+                    //VALIDANDO ESTADO DO SENDER
+                    if (dataHolder == null || permissionHandler == null) {
+                        sender.sendMessage(ChatColor.RED + "Couldn't retrieve your world. World selection is needed.");
+                        sender.sendMessage(ChatColor.RED + "Use /manselect <world>");
+                        return true;
+                    }
+                    //VALIDANDO ARGUMENTOS
+                    if (args.length != 1) {
+                        sender.sendMessage(ChatColor.RED + "Review your arguments count!");
+                        return false;
+                    }
+                    if (validateOnlinePlayer) {
+                        match = this.getServer().matchPlayer(args[0]);
+                        if (match.size() != 1) {
+                            sender.sendMessage(ChatColor.RED + "Player not found!");
+                            return false;
+                        }
+                    }
+                    if (match != null) {
+                        auxUser = dataHolder.getUser(match.get(0).getName());
+                    } else {
+                        auxUser = dataHolder.getUser(args[0]);
+                    }
+                    //VALIDANDO PERMISSAO
+                    if (!isConsole && (senderGroup != null ? permissionHandler.inGroup(auxUser.getName(), senderGroup.getName()) : false)) {
+                        sender.sendMessage(ChatColor.RED + "Can't modify player with same permissions than you, or higher.");
+                        return false;
+                    }
+                    //PARECE OK
+                    auxUser.removeSubGroup(auxGroup);
+                    sender.sendMessage(ChatColor.YELLOW + "You removed subgroup '" + auxGroup.getName() + "' from player '" + auxUser.getName() + "' list.");
 
                     return true;
                 case mangadd:
@@ -539,9 +612,25 @@ public class GroupManager extends JavaPlugin {
                         auxString = auxString.substring(0, auxString.lastIndexOf(","));
                         sender.sendMessage(ChatColor.YELLOW + "The player '" + auxUser.getName() + "' has following permissions: " + ChatColor.WHITE + auxString);
                         sender.sendMessage(ChatColor.YELLOW + "And all permissions from group: " + auxUser.getGroupName());
+                        auxString = "";
+                        for (String subGroup : auxUser.subGroupListStringCopy()) {
+                            auxString += subGroup + ", ";
+                        }
+                        if (auxString.lastIndexOf(",") > 0) {
+                            auxString = auxString.substring(0, auxString.lastIndexOf(","));
+                            sender.sendMessage(ChatColor.YELLOW + "And all permissions from subgroups: " + auxString);
+                        }
                     } else {
                         sender.sendMessage(ChatColor.YELLOW + "The player '" + auxUser.getName() + "' has no specific permissions.");
                         sender.sendMessage(ChatColor.YELLOW + "Only all permissions from group: " + auxUser.getGroupName());
+                        auxString = "";
+                        for (String subGroup : auxUser.subGroupListStringCopy()) {
+                            auxString += subGroup + ", ";
+                        }
+                        if (auxString.lastIndexOf(",") > 0) {
+                            auxString = auxString.substring(0, auxString.lastIndexOf(","));
+                            sender.sendMessage(ChatColor.YELLOW + "And all permissions from subgroups: " + auxString);
+                        }
                     }
                     return true;
                 case manucheckp:
@@ -1391,7 +1480,7 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
-                    sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+                    sender.sendMessage(ChatColor.YELLOW + "You changed " + auxUser.getName() + " group to " + auxGroup.getName() + ".");
 
                     return true;
                 //break;
@@ -1447,7 +1536,7 @@ public class GroupManager extends JavaPlugin {
                     }
                     //PARECE OK
                     auxUser.setGroup(auxGroup);
-                    sender.sendMessage(ChatColor.YELLOW + "You changed that player group.");
+                    sender.sendMessage(ChatColor.YELLOW + "You changed " + auxUser.getName() + " group to " + auxGroup.getName() + ".");
 
                     return true;
                 //break;
@@ -1499,12 +1588,12 @@ public class GroupManager extends JavaPlugin {
                     }
                     auxString = "";
                     for (int i = 0; i < args.length; i++) {
-                        if(args[i]==null){
-                            logger.warning("Bukkit gave invalid arguments array! Cmd: "+cmd.getName()+" args.length: "+args.length);
+                        if (args[i] == null) {
+                            logger.warning("Bukkit gave invalid arguments array! Cmd: " + cmd.getName() + " args.length: " + args.length);
                             return false;
                         }
                         auxString += args[i];
-                        if (i < (args.length-1)) {
+                        if (i < (args.length - 1)) {
                             auxString += " ";
                         }
                     }

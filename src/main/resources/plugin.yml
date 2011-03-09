@@ -1,5 +1,5 @@
 name: GroupManager
-version: 1.0(alpha-2)
+version: 1.0(alpha-5)
 main: org.anjocaido.groupmanager.GroupManager
 website: http://www.anjocaido.info/
 description: Provides on-the-fly system for Permission system created by Nijikokun. But all in memory, and with flat-file saving schedule.
@@ -8,13 +8,21 @@ authors:
   - Gabriel Couto
 commands:
   manuadd:
-    description: Change player group to one desired.
+    description: Move a player to desired group.(Adds to the file if not exists)
     usage: /<command> <player> <group>
     permission: groupmanager.manuadd
   manudel:
-    description: Take user to default group. Removes user specific permissions.
+    description: Remove any user specific configuration. Make him default group.
     usage: /<command> <player>
     permission: groupmanager.manudel
+  manuaddsub:
+    description: Add a group to a player's subgroup list.
+    usage: /<command> <player> <group>
+    permission: groupmanager.manuaddsub
+  manudelsub:
+    description: Remove a group to a player's subgroup list.
+    usage: /<command> <player> <group>
+    permission: groupmanager.manudelsub
   mangadd:
     description: Add group to the system.
     usage: /<command> <group>
